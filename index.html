@@ -1,0 +1,3612 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0F6E62" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1614" media="(prefers-color-scheme: dark)">
+<title>Trip Splitter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Bai+Jamjuree:wght@500;600;700&display=swap">
+<style>
+:root{
+  --font:'Anuphan','IBM Plex Sans Thai','Leelawadee UI',Tahoma,system-ui,sans-serif;
+  --disp:'Bai Jamjuree','Anuphan',Tahoma,system-ui,sans-serif;
+  --bg:#EAF0EE; --surface:#FFFFFF; --surface2:#F3F7F5; --ink:#13221F; --ink2:#4A5C57; --ink3:#7B8C87;
+  --line:#D9E4E0; --pine:#0F6E62; --pine2:#0A5248; --pine-soft:#DCEEE9; --on-pine:#FFFFFF;
+  --owe:#D2453B; --owe-soft:#FCE9E7; --get:#12845A; --get-soft:#DDF3E8; --sun:#E8960F; --sun-soft:#FDF1DC;
+  --pass:#123F39; --pass2:#0E332E;
+  --sh1:0 1px 2px rgba(19,34,31,.05),0 6px 20px -10px rgba(19,34,31,.16);
+  --sh2:0 18px 48px -18px rgba(19,34,31,.38);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0C1614; --surface:#14211F; --surface2:#1A2B28; --ink:#E3EDEA; --ink2:#A8B9B4; --ink3:#788A85;
+  --line:#253B37; --pine:#3BBFAA; --pine2:#62D2C0; --pine-soft:#163733; --on-pine:#06201C;
+  --owe:#FF7B6E; --owe-soft:#3A1E1B; --get:#46CF92; --get-soft:#143326; --sun:#F5B041; --sun-soft:#3A2C12;
+  --pass:#173F3A; --pass2:#11312D;
+  --sh1:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.6); --sh2:0 18px 48px -18px rgba(0,0,0,.8);
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding:76px 0 100px}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6;font-size:15px}
+body.lock{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--pine)}
+h2{font-family:var(--disp);font-weight:600;font-size:18px;margin:22px 0 10px;letter-spacing:-.005em}
+h2 small{font-family:var(--font);font-weight:400;font-size:13px;color:var(--ink3);margin-left:6px}
+:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.num{font-family:var(--disp);font-variant-numeric:tabular-nums}
+.muted{color:var(--ink3)}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+
+/* ── top bar ── */
+.top{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.top .wrap{display:flex;align-items:center;gap:10px;height:62px}
+.trip-sw{display:flex;align-items:center;gap:8px;min-width:0;flex:1;background:none;border:0;padding:6px 0;text-align:left}
+.trip-sw .logo{width:36px;height:36px;border-radius:11px;background:var(--pine);color:var(--on-pine);display:grid;place-items:center;flex-shrink:0;font-size:18px}
+.trip-sw .t{min-width:0}
+.trip-sw .k{font-size:11.5px;color:var(--ink3);line-height:1.2}
+.trip-sw .n{font-family:var(--disp);font-weight:600;font-size:16.5px;line-height:1.25;display:flex;align-items:center;gap:4px}
+.trip-sw .n span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{position:relative;width:40px;height:40px;border-radius:12px;border:0;background:var(--surface);display:grid;place-items:center;box-shadow:var(--sh1);color:var(--ink2)}
+.dot{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--owe);color:#fff;font-size:10.5px;font-weight:600;display:grid;place-items:center;padding:0 5px;border:2px solid var(--bg)}
+.me-btn{border:0;background:none;padding:0;border-radius:50%}
+.me-btn .av{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--pine)}
+
+/* ── bottom nav ── */
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.bnav-in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:64px;align-items:center}
+.bn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;color:var(--ink3);background:none;border:0;padding:6px 0;font-weight:500}
+.bn.act{color:var(--pine)}
+.bn .ic{width:23px;height:23px}
+.bn .dot{top:0;right:calc(50% - 22px)}
+.fab{width:58px;height:58px;border-radius:20px;background:var(--pine);color:var(--on-pine);border:0;margin:-30px auto 0;display:grid;place-items:center;box-shadow:0 12px 26px -10px var(--pine);transition:transform .15s}
+.fab:active{transform:scale(.94)}
+.fab .ic{width:28px;height:28px;stroke-width:2.4}
+.fab:disabled{opacity:.4}
+main.wrap{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+
+/* ── boarding pass ── */
+.pass{position:relative;color:#fff;border-radius:22px;margin:6px 0 16px;background:var(--pass);box-shadow:var(--sh2);overflow:hidden;isolation:isolate}
+.pass::before{content:"";position:absolute;inset:0;z-index:-1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='260'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='.08' transform='rotate(-12 330 50)'%3E%3Cellipse cx='330' cy='50' rx='46' ry='26'/%3E%3Cellipse cx='330' cy='50' rx='84' ry='50'/%3E%3Cellipse cx='330' cy='50' rx='126' ry='76'/%3E%3Cellipse cx='330' cy='50' rx='170' ry='104'/%3E%3Cellipse cx='330' cy='50' rx='218' ry='134'/%3E%3Cellipse cx='330' cy='50' rx='270' ry='166'/%3E%3C/g%3E%3C/svg%3E") top right/420px no-repeat}
+.pass-top{padding:20px 22px 18px}
+.pass-name{font-family:var(--disp);font-weight:700;font-size:26px;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}
+.pass-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:rgba(255,255,255,.72)}
+.pass-stack{display:flex;margin-top:14px}
+.pass-stack .av{box-shadow:0 0 0 2.5px var(--pass);margin-right:-8px}
+.pass-stack .more{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:11.5px;box-shadow:0 0 0 2.5px var(--pass)}
+.pass-cut{position:relative;height:0;border-top:2px dashed rgba(255,255,255,.22);margin:0 18px}
+.pass-cut::before,.pass-cut::after{content:"";position:absolute;top:-13px;width:24px;height:24px;border-radius:50%;background:var(--bg)}
+.pass-cut::before{left:-31px}.pass-cut::after{right:-31px}
+.pass-bot{padding:16px 22px 20px;background:var(--pass2);display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pass-lbl{font-size:13px;color:rgba(255,255,255,.72)}
+.pass-amt{font-family:var(--disp);font-weight:700;font-size:46px;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pass-amt small{font-size:17px;font-weight:500;margin-left:6px;opacity:.7;letter-spacing:0}
+.pass-side{text-align:right;font-size:12.5px;color:rgba(255,255,255,.68)}
+.pass-side b{display:block;font-family:var(--disp);font-size:17px;color:#fff;font-weight:600}
+.a-owe{color:#FF9D8F}.a-get{color:#7EF0C0}.a-even{color:#fff}
+.pass.closed .pass-top::after{content:"ปิดทริปแล้ว";position:absolute;top:18px;right:18px;font-size:11.5px;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.4);color:rgba(255,255,255,.85)}
+
+/* ── segmented / tabs ── */
+.seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;margin-bottom:16px}
+.seg>*{flex:1;min-width:0;text-align:center;padding:8px 4px;border-radius:10px;font-size:14px;color:var(--ink2);background:none;border:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.seg>.act,.seg>label:has(input:checked){background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--sh1)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg.sm{margin-bottom:10px}.seg.sm>*{font-size:13.5px;padding:7px 4px}
+
+/* ── surfaces ── */
+.panel{background:var(--surface);border-radius:18px;box-shadow:var(--sh1);padding:16px;margin-bottom:14px}
+.list{background:var(--surface);border-radius:18px;box-shadow:var(--sh1);overflow:hidden;margin-bottom:14px}
+.list>.it{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left}
+.list>.it:last-child{border-bottom:0}
+button.it:hover{background:var(--surface2)}
+.it .g{flex:1;min-width:0}
+.it .t1{font-weight:600;font-size:15px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .t2{font-size:12.5px;color:var(--ink3);line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .amt{font-family:var(--disp);font-weight:600;font-size:16px;white-space:nowrap;text-align:right}
+.it .amt small{display:block;font-family:var(--font);font-weight:400;font-size:11.5px;color:var(--ink3)}
+.cat-ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:20px;flex-shrink:0;background-size:cover;background-position:center}
+.notice{display:flex;gap:10px;align-items:flex-start;background:var(--sun-soft);color:var(--ink);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px}
+.notice.info{background:var(--pine-soft)}
+.notice.bad{background:var(--owe-soft)}
+
+/* ── buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:46px;padding:10px 18px;border-radius:14px;border:0;background:var(--surface2);color:var(--ink);font-weight:600;font-size:15px;text-decoration:none;transition:filter .15s,transform .1s;box-shadow:inset 0 0 0 1px var(--line)}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--pine);color:var(--on-pine);box-shadow:none}
+.btn.pri:hover{filter:brightness(1.06)}
+.btn.line{background:#06C755;color:#fff;box-shadow:none}
+.btn.danger{color:var(--owe);background:var(--owe-soft);box-shadow:none}
+.btn.ghost{background:none;box-shadow:none;color:var(--pine)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:13.5px;border-radius:11px}
+.btn.full{width:100%}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns>.btn{flex:1}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
+.quick button,.quick a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 12px;border-radius:16px;border:0;background:var(--surface);box-shadow:var(--sh1);font-size:13px;font-weight:500;color:var(--ink);text-decoration:none}
+.quick .qi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--pine-soft);color:var(--pine)}
+
+/* ── forms ── */
+.fld{margin-bottom:14px}
+.lbl{display:block;font-size:13.5px;font-weight:500;color:var(--ink2);margin-bottom:6px}
+.inp,input[type=text],input[type=number],input[type=password],input[type=date],select,textarea{width:100%;background:var(--surface2);border:1.5px solid transparent;border-radius:13px;padding:11px 14px;font-size:16px;min-height:48px;color:var(--ink);transition:border-color .15s,background .15s}
+textarea{min-height:0;font-size:13.5px;line-height:1.55}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pine);background:var(--surface)}
+input::placeholder{color:var(--ink3)}
+.search{position:relative;margin-bottom:10px}
+.search .ic{position:absolute;left:14px;top:14px;color:var(--ink3)}
+.search input{padding-left:42px;background:var(--surface);box-shadow:var(--sh1)}
+.amt-wrap{display:flex;align-items:baseline;justify-content:center;gap:6px;padding:8px 0 4px;border-bottom:2px solid var(--line);margin-bottom:16px;transition:border-color .15s}
+.amt-wrap:focus-within{border-color:var(--pine)}
+.amt-wrap span{font-family:var(--disp);font-size:24px;color:var(--ink3)}
+.amt-wrap input{font-family:var(--disp);font-weight:700;font-size:44px;text-align:center;background:none;border:0;min-height:0;padding:0;width:6ch;field-sizing:content;min-width:1.4ch;max-width:100%;letter-spacing:-.02em}
+.amt-wrap input::-webkit-inner-spin-button,.amt-wrap input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.amt-wrap input{-moz-appearance:textfield}
+.amt-wrap input:focus{background:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px 12px;padding:2px 16px}
+.chips.scroll::-webkit-scrollbar{display:none}
+.chip{position:relative;display:inline-flex;align-items:center;gap:7px;padding:6px 13px;min-height:38px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-size:14px;user-select:none;white-space:nowrap;color:var(--ink)}
+.chip.p{padding-left:5px}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip:has(input:checked),.chip.act{border-color:var(--pine);background:var(--pine-soft);color:var(--pine2);font-weight:600}
+.chip:has(input:focus-visible){outline:2px solid var(--pine);outline-offset:2px}
+.chip .tick{display:none}
+.chip:has(input[type=checkbox]:checked) .tick{display:inline}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:10px}
+.vgrid label{font-size:12.5px;color:var(--ink2);display:block;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vgrid input{min-height:42px;padding:8px 12px}
+.preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:13px}
+.preview span{background:var(--surface2);border-radius:999px;padding:3px 10px}
+.preview b{font-family:var(--disp);font-weight:600}
+.drop{display:flex;align-items:center;gap:12px;padding:12px;border:1.5px dashed var(--line);border-radius:14px;color:var(--ink2);font-size:14px;cursor:pointer;position:relative}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop .ph{width:52px;height:52px;border-radius:11px;background:var(--surface2) center/cover;display:grid;place-items:center;flex-shrink:0;color:var(--ink3)}
+.chk{display:flex;align-items:center;gap:10px;font-size:14.5px;min-height:40px;cursor:pointer}
+.chk input{width:20px;height:20px;accent-color:var(--pine);flex-shrink:0}
+.err{background:var(--owe-soft);color:var(--owe);border-radius:12px;padding:10px 13px;margin:10px 0;font-size:14px;font-weight:500}
+.hint{font-size:12.5px;color:var(--ink3);margin:6px 0 10px;line-height:1.5}
+
+/* ── sheet ── */
+.sheet-bg{position:fixed;inset:0;z-index:90;background:rgba(6,18,16,.48);animation:fade .2s}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:91;max-width:640px;margin:0 auto;max-height:92dvh;background:var(--surface);border-radius:26px 26px 0 0;display:flex;flex-direction:column;animation:up .32s cubic-bezier(.2,.9,.25,1);box-shadow:var(--sh2)}
+.sheet>form,.sheet>.sf{display:flex;flex-direction:column;min-height:0;flex:1}
+.sheet-h{display:flex;align-items:center;gap:10px;padding:10px 18px 6px;position:relative}
+.sheet-h::before{content:"";position:absolute;top:8px;left:50%;width:40px;height:4px;border-radius:2px;background:var(--line);transform:translateX(-50%)}
+.sheet-h h3{flex:1;font-family:var(--disp);font-weight:600;font-size:18px;margin:12px 0 0}
+.sheet-h .icon-btn{box-shadow:none;background:var(--surface2);margin-top:10px}
+.sheet-b{overflow-y:auto;padding:8px 18px 16px;flex:1;overscroll-behavior:contain}
+.sheet-f{padding:12px 18px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){.sheet,.sheet-bg{animation:none}}
+
+/* ── net / flow ── */
+.net-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:6px}
+.net{background:var(--surface);border-radius:16px;box-shadow:var(--sh1);padding:14px 12px;display:flex;align-items:center;gap:10px}
+.net.me{box-shadow:inset 0 0 0 2px var(--pine),var(--sh1)}
+.net .g{min-width:0}
+.net .nm{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.net .v{font-family:var(--disp);font-weight:600;font-size:16px;line-height:1.3}
+.net .s{font-size:11.5px;color:var(--ink3)}
+.tx{background:var(--surface);border-radius:18px;box-shadow:var(--sh1);margin-bottom:12px;overflow:hidden}
+.tx.me{box-shadow:inset 0 0 0 2px var(--pine),var(--sh1)}
+.flow{display:flex;align-items:flex-start;gap:8px;padding:16px 14px 14px}
+.flow-side{width:76px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.flow-nm{font-size:12.5px;font-weight:600;text-align:center;line-height:1.3;word-break:break-word}
+.flow-mid{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;padding-top:6px}
+.flow-amt{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--owe);white-space:nowrap}
+.flow-line{position:relative;width:100%;height:2px;margin:8px 0 5px;background-image:linear-gradient(90deg,var(--line) 55%,transparent 0);background-size:9px 2px}
+.flow-dot{position:absolute;top:50%;left:0;width:8px;height:8px;border-radius:50%;background:var(--pine);transform:translateY(-50%);animation:flowDot 3s linear infinite}
+@keyframes flowDot{0%{left:0;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:100%;opacity:0}}
+@media (prefers-reduced-motion:reduce){.flow-dot{animation:none;left:calc(50% - 4px)}}
+.flow-cap{font-size:11.5px;color:var(--ink3)}
+.tx-body{border-top:1px dashed var(--line);padding:14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start}
+.tx-body.noqr{grid-template-columns:1fr}
+.qr{background:#fff;border-radius:14px;padding:8px;width:150px;text-align:center;box-shadow:inset 0 0 0 1px var(--line)}
+.qr img{width:100%;display:block;image-rendering:pixelated}
+.qr div{font-size:11px;color:#4A5C57;line-height:1.4;margin-top:4px}
+.acct{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:12px;padding:8px 10px 8px 12px;margin-bottom:8px;font-size:13.5px}
+.acct .g{flex:1;min-width:0}.acct b{display:block;font-family:var(--disp);font-size:15px;font-weight:600;word-break:break-all}
+.clear{background:var(--get-soft);border-radius:18px;padding:26px 18px;text-align:center;margin-bottom:12px}
+.clear .e{font-size:36px}.clear .t{font-family:var(--disp);font-weight:600;font-size:17px;color:var(--get)}
+.clear .s{font-size:13px;color:var(--ink2)}
+
+/* bars */
+.bar-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line)}
+.bar-row:last-child{border-bottom:0}
+.bar-nm{width:96px;flex-shrink:0;font-size:13.5px}
+.bar-tr{flex:1;height:8px;background:var(--surface2);border-radius:5px;overflow:hidden}
+.bar-fl{height:100%;border-radius:5px}
+.bar-v{width:78px;text-align:right;font-family:var(--disp);font-weight:600;font-size:14px}
+
+/* empty */
+.empty{text-align:center;padding:34px 22px 26px;background:var(--surface);border-radius:20px;box-shadow:var(--sh1);margin-bottom:14px}
+.empty .e{font-size:40px;line-height:1}
+.empty .t{font-family:var(--disp);font-weight:600;font-size:17px;margin-top:10px}
+.empty .s{font-size:13.5px;color:var(--ink3);margin:4px auto 14px;max-width:320px}
+
+/* packing */
+.pk-prog{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.pk-bar{flex:1;height:10px;background:var(--surface);border-radius:6px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.pk-bar div{height:100%;background:var(--get);border-radius:6px;transition:width .3s}
+.pk-item{padding:12px 14px;border-bottom:1px solid var(--line)}
+.pk-item:last-child{border-bottom:0}
+.pk-top{display:flex;align-items:center;gap:12px}
+.pk-top input{width:24px;height:24px;accent-color:var(--get);flex-shrink:0}
+.pk-done .pk-name{opacity:.5;text-decoration:line-through}
+.pk-ctl{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto;gap:8px;margin-top:10px;padding-left:36px}
+.pk-ctl select,.pk-ctl input{min-height:40px;padding:7px 10px;font-size:14.5px}
+.pk-ctl input{text-align:right}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600;margin-left:6px;vertical-align:1px;color:#fff;white-space:nowrap}
+
+/* camp */
+.map{width:100%;height:260px;border:0;border-radius:18px;display:block;background:var(--surface2);box-shadow:var(--sh1)}
+.wx{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.wx:last-child{border-bottom:0}
+.wx.warn{background:var(--sun-soft)}
+.wx-d{width:52px;flex-shrink:0;font-family:var(--disp);font-weight:600;font-size:13.5px;color:var(--pine)}
+.wx-i{font-size:26px;line-height:1}
+.wx-t{font-family:var(--disp);font-weight:700;font-size:18px;white-space:nowrap}
+.wx-t small{font-size:13px;color:var(--ink3);font-weight:500}
+
+/* chat */
+.thread{display:flex;flex-direction:column;gap:8px;min-height:40vh;max-height:calc(100dvh - 300px);overflow-y:auto;padding:14px;background:var(--surface);border-radius:18px;box-shadow:var(--sh1);margin-bottom:10px}
+.b-out{align-self:flex-end;background:var(--pine);color:var(--on-pine);padding:9px 14px;border-radius:18px 18px 5px 18px;max-width:80%;word-break:break-word;font-size:14.5px;line-height:1.5}
+.b-in{align-self:flex-start;background:var(--surface2);padding:9px 14px;border-radius:18px 18px 18px 5px;max-width:80%;word-break:break-word;font-size:14.5px;line-height:1.5}
+.b-sys{background:var(--pine-soft);padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.55;word-break:break-word}
+.b-time{font-size:11px;color:var(--ink3);margin-top:2px}
+.composer{display:flex;gap:8px;align-items:center}
+.composer input{flex:1;background:var(--surface);box-shadow:var(--sh1);border-radius:999px;padding-left:18px}
+.composer .btn{border-radius:999px;width:48px;padding:0}
+
+/* login */
+.login{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:28px 0 40px}
+.login .brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.login .brand .logo{width:52px;height:52px;border-radius:16px;background:var(--pine);color:var(--on-pine);display:grid;place-items:center;font-size:26px}
+.login h1{font-family:var(--disp);font-weight:700;font-size:28px;margin:0;line-height:1.15}
+.login .tag{color:var(--ink3);font-size:14px}
+.who{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin-bottom:16px}
+.who label{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;border-radius:16px;background:var(--surface);box-shadow:var(--sh1);cursor:pointer;font-size:13px;font-weight:500;position:relative;text-align:center;word-break:break-word}
+.who input{position:absolute;opacity:0;pointer-events:none}
+.who label:has(input:checked){box-shadow:inset 0 0 0 2px var(--pine),var(--sh1);color:var(--pine2)}
+.pin{font-family:var(--disp);font-size:28px !important;letter-spacing:.6em;text-align:center;padding-left:.6em !important}
+
+/* toast + lightbox */
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:10px;max-width:min(92vw,440px);padding:12px 18px;border-radius:16px;background:var(--ink);color:var(--bg);font-size:14.5px;font-weight:500;box-shadow:var(--sh2);animation:toast 3s cubic-bezier(.2,.9,.25,1) forwards;pointer-events:none}
+.toast .ti{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex-shrink:0;color:#fff}
+.t-ok .ti{background:var(--get)}.t-err .ti{background:var(--owe)}.t-warn .ti{background:var(--sun)}.t-info .ti{background:var(--pine)}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,16px)}8%{opacity:1;transform:translate(-50%,0)}82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,8px);visibility:hidden}}
+.lightbox{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:100%;border-radius:10px}
+.av{border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;background-size:cover;background-position:center;font-family:var(--disp)}
+details.more{margin-bottom:14px}
+details.more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--surface);border-radius:14px;box-shadow:var(--sh1);font-weight:500;font-size:14.5px}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary .ic{margin-left:auto;transition:transform .2s;color:var(--ink3)}
+details.more[open]>summary .ic{transform:rotate(180deg)}
+details.more>.in{padding-top:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:640px){
+  .two{grid-template-columns:1fr}
+  .pass-amt{font-size:40px}
+  .pass-name{font-size:23px}
+  .tx-body{grid-template-columns:1fr}
+  .qr{margin:0 auto}
+  .flow-side{width:62px}
+  .flow-amt{font-size:17px}
+  .bar-nm{width:80px;font-size:12.5px}
+  .pk-ctl{padding-left:0}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>//---------------------------------------------------------------------
+//
+// QR Code Generator for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//  http://www.opensource.org/licenses/mit-license.php
+//
+// The word 'QR Code' is registered trademark of
+// DENSO WAVE INCORPORATED
+//  http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+
+var qrcode = function() {
+
+  //---------------------------------------------------------------------
+  // qrcode
+  //---------------------------------------------------------------------
+
+  /**
+   * qrcode
+   * @param typeNumber 1 to 40
+   * @param errorCorrectionLevel 'L','M','Q','H'
+   */
+  var qrcode = function(typeNumber, errorCorrectionLevel) {
+
+    var PAD0 = 0xEC;
+    var PAD1 = 0x11;
+
+    var _typeNumber = typeNumber;
+    var _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
+    var _modules = null;
+    var _moduleCount = 0;
+    var _dataCache = null;
+    var _dataList = [];
+
+    var _this = {};
+
+    var makeImpl = function(test, maskPattern) {
+
+      _moduleCount = _typeNumber * 4 + 17;
+      _modules = function(moduleCount) {
+        var modules = new Array(moduleCount);
+        for (var row = 0; row < moduleCount; row += 1) {
+          modules[row] = new Array(moduleCount);
+          for (var col = 0; col < moduleCount; col += 1) {
+            modules[row][col] = null;
+          }
+        }
+        return modules;
+      }(_moduleCount);
+
+      setupPositionProbePattern(0, 0);
+      setupPositionProbePattern(_moduleCount - 7, 0);
+      setupPositionProbePattern(0, _moduleCount - 7);
+      setupPositionAdjustPattern();
+      setupTimingPattern();
+      setupTypeInfo(test, maskPattern);
+
+      if (_typeNumber >= 7) {
+        setupTypeNumber(test);
+      }
+
+      if (_dataCache == null) {
+        _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
+      }
+
+      mapData(_dataCache, maskPattern);
+    };
+
+    var setupPositionProbePattern = function(row, col) {
+
+      for (var r = -1; r <= 7; r += 1) {
+
+        if (row + r <= -1 || _moduleCount <= row + r) continue;
+
+        for (var c = -1; c <= 7; c += 1) {
+
+          if (col + c <= -1 || _moduleCount <= col + c) continue;
+
+          if ( (0 <= r && r <= 6 && (c == 0 || c == 6) )
+              || (0 <= c && c <= 6 && (r == 0 || r == 6) )
+              || (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+            _modules[row + r][col + c] = true;
+          } else {
+            _modules[row + r][col + c] = false;
+          }
+        }
+      }
+    };
+
+    var getBestMaskPattern = function() {
+
+      var minLostPoint = 0;
+      var pattern = 0;
+
+      for (var i = 0; i < 8; i += 1) {
+
+        makeImpl(true, i);
+
+        var lostPoint = QRUtil.getLostPoint(_this);
+
+        if (i == 0 || minLostPoint > lostPoint) {
+          minLostPoint = lostPoint;
+          pattern = i;
+        }
+      }
+
+      return pattern;
+    };
+
+    var setupTimingPattern = function() {
+
+      for (var r = 8; r < _moduleCount - 8; r += 1) {
+        if (_modules[r][6] != null) {
+          continue;
+        }
+        _modules[r][6] = (r % 2 == 0);
+      }
+
+      for (var c = 8; c < _moduleCount - 8; c += 1) {
+        if (_modules[6][c] != null) {
+          continue;
+        }
+        _modules[6][c] = (c % 2 == 0);
+      }
+    };
+
+    var setupPositionAdjustPattern = function() {
+
+      var pos = QRUtil.getPatternPosition(_typeNumber);
+
+      for (var i = 0; i < pos.length; i += 1) {
+
+        for (var j = 0; j < pos.length; j += 1) {
+
+          var row = pos[i];
+          var col = pos[j];
+
+          if (_modules[row][col] != null) {
+            continue;
+          }
+
+          for (var r = -2; r <= 2; r += 1) {
+
+            for (var c = -2; c <= 2; c += 1) {
+
+              if (r == -2 || r == 2 || c == -2 || c == 2
+                  || (r == 0 && c == 0) ) {
+                _modules[row + r][col + c] = true;
+              } else {
+                _modules[row + r][col + c] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    var setupTypeNumber = function(test) {
+
+      var bits = QRUtil.getBCHTypeNumber(_typeNumber);
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
+      }
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
+      }
+    };
+
+    var setupTypeInfo = function(test, maskPattern) {
+
+      var data = (_errorCorrectionLevel << 3) | maskPattern;
+      var bits = QRUtil.getBCHTypeInfo(data);
+
+      // vertical
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 6) {
+          _modules[i][8] = mod;
+        } else if (i < 8) {
+          _modules[i + 1][8] = mod;
+        } else {
+          _modules[_moduleCount - 15 + i][8] = mod;
+        }
+      }
+
+      // horizontal
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 8) {
+          _modules[8][_moduleCount - i - 1] = mod;
+        } else if (i < 9) {
+          _modules[8][15 - i - 1 + 1] = mod;
+        } else {
+          _modules[8][15 - i - 1] = mod;
+        }
+      }
+
+      // fixed module
+      _modules[_moduleCount - 8][8] = (!test);
+    };
+
+    var mapData = function(data, maskPattern) {
+
+      var inc = -1;
+      var row = _moduleCount - 1;
+      var bitIndex = 7;
+      var byteIndex = 0;
+      var maskFunc = QRUtil.getMaskFunction(maskPattern);
+
+      for (var col = _moduleCount - 1; col > 0; col -= 2) {
+
+        if (col == 6) col -= 1;
+
+        while (true) {
+
+          for (var c = 0; c < 2; c += 1) {
+
+            if (_modules[row][col - c] == null) {
+
+              var dark = false;
+
+              if (byteIndex < data.length) {
+                dark = ( ( (data[byteIndex] >>> bitIndex) & 1) == 1);
+              }
+
+              var mask = maskFunc(row, col - c);
+
+              if (mask) {
+                dark = !dark;
+              }
+
+              _modules[row][col - c] = dark;
+              bitIndex -= 1;
+
+              if (bitIndex == -1) {
+                byteIndex += 1;
+                bitIndex = 7;
+              }
+            }
+          }
+
+          row += inc;
+
+          if (row < 0 || _moduleCount <= row) {
+            row -= inc;
+            inc = -inc;
+            break;
+          }
+        }
+      }
+    };
+
+    var createBytes = function(buffer, rsBlocks) {
+
+      var offset = 0;
+
+      var maxDcCount = 0;
+      var maxEcCount = 0;
+
+      var dcdata = new Array(rsBlocks.length);
+      var ecdata = new Array(rsBlocks.length);
+
+      for (var r = 0; r < rsBlocks.length; r += 1) {
+
+        var dcCount = rsBlocks[r].dataCount;
+        var ecCount = rsBlocks[r].totalCount - dcCount;
+
+        maxDcCount = Math.max(maxDcCount, dcCount);
+        maxEcCount = Math.max(maxEcCount, ecCount);
+
+        dcdata[r] = new Array(dcCount);
+
+        for (var i = 0; i < dcdata[r].length; i += 1) {
+          dcdata[r][i] = 0xff & buffer.getBuffer()[i + offset];
+        }
+        offset += dcCount;
+
+        var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+        var rawPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+        var modPoly = rawPoly.mod(rsPoly);
+        ecdata[r] = new Array(rsPoly.getLength() - 1);
+        for (var i = 0; i < ecdata[r].length; i += 1) {
+          var modIndex = i + modPoly.getLength() - ecdata[r].length;
+          ecdata[r][i] = (modIndex >= 0)? modPoly.getAt(modIndex) : 0;
+        }
+      }
+
+      var totalCodeCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalCodeCount += rsBlocks[i].totalCount;
+      }
+
+      var data = new Array(totalCodeCount);
+      var index = 0;
+
+      for (var i = 0; i < maxDcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < dcdata[r].length) {
+            data[index] = dcdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      for (var i = 0; i < maxEcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < ecdata[r].length) {
+            data[index] = ecdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      return data;
+    };
+
+    var createData = function(typeNumber, errorCorrectionLevel, dataList) {
+
+      var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
+
+      var buffer = qrBitBuffer();
+
+      for (var i = 0; i < dataList.length; i += 1) {
+        var data = dataList[i];
+        buffer.put(data.getMode(), 4);
+        buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+        data.write(buffer);
+      }
+
+      // calc num max data.
+      var totalDataCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalDataCount += rsBlocks[i].dataCount;
+      }
+
+      if (buffer.getLengthInBits() > totalDataCount * 8) {
+        throw 'code length overflow. ('
+          + buffer.getLengthInBits()
+          + '>'
+          + totalDataCount * 8
+          + ')';
+      }
+
+      // end code
+      if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+        buffer.put(0, 4);
+      }
+
+      // padding
+      while (buffer.getLengthInBits() % 8 != 0) {
+        buffer.putBit(false);
+      }
+
+      // padding
+      while (true) {
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD0, 8);
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD1, 8);
+      }
+
+      return createBytes(buffer, rsBlocks);
+    };
+
+    _this.addData = function(data, mode) {
+
+      mode = mode || 'Byte';
+
+      var newData = null;
+
+      switch(mode) {
+      case 'Numeric' :
+        newData = qrNumber(data);
+        break;
+      case 'Alphanumeric' :
+        newData = qrAlphaNum(data);
+        break;
+      case 'Byte' :
+        newData = qr8BitByte(data);
+        break;
+      case 'Kanji' :
+        newData = qrKanji(data);
+        break;
+      default :
+        throw 'mode:' + mode;
+      }
+
+      _dataList.push(newData);
+      _dataCache = null;
+    };
+
+    _this.isDark = function(row, col) {
+      if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
+        throw row + ',' + col;
+      }
+      return _modules[row][col];
+    };
+
+    _this.getModuleCount = function() {
+      return _moduleCount;
+    };
+
+    _this.make = function() {
+      if (_typeNumber < 1) {
+        var typeNumber = 1;
+
+        for (; typeNumber < 40; typeNumber++) {
+          var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, _errorCorrectionLevel);
+          var buffer = qrBitBuffer();
+
+          for (var i = 0; i < _dataList.length; i++) {
+            var data = _dataList[i];
+            buffer.put(data.getMode(), 4);
+            buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+            data.write(buffer);
+          }
+
+          var totalDataCount = 0;
+          for (var i = 0; i < rsBlocks.length; i++) {
+            totalDataCount += rsBlocks[i].dataCount;
+          }
+
+          if (buffer.getLengthInBits() <= totalDataCount * 8) {
+            break;
+          }
+        }
+
+        _typeNumber = typeNumber;
+      }
+
+      makeImpl(false, getBestMaskPattern() );
+    };
+
+    _this.createTableTag = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var qrHtml = '';
+
+      qrHtml += '<table style="';
+      qrHtml += ' border-width: 0px; border-style: none;';
+      qrHtml += ' border-collapse: collapse;';
+      qrHtml += ' padding: 0px; margin: ' + margin + 'px;';
+      qrHtml += '">';
+      qrHtml += '<tbody>';
+
+      for (var r = 0; r < _this.getModuleCount(); r += 1) {
+
+        qrHtml += '<tr>';
+
+        for (var c = 0; c < _this.getModuleCount(); c += 1) {
+          qrHtml += '<td style="';
+          qrHtml += ' border-width: 0px; border-style: none;';
+          qrHtml += ' border-collapse: collapse;';
+          qrHtml += ' padding: 0px; margin: 0px;';
+          qrHtml += ' width: ' + cellSize + 'px;';
+          qrHtml += ' height: ' + cellSize + 'px;';
+          qrHtml += ' background-color: ';
+          qrHtml += _this.isDark(r, c)? '#000000' : '#ffffff';
+          qrHtml += ';';
+          qrHtml += '"/>';
+        }
+
+        qrHtml += '</tr>';
+      }
+
+      qrHtml += '</tbody>';
+      qrHtml += '</table>';
+
+      return qrHtml;
+    };
+
+    _this.createSvgTag = function(cellSize, margin, alt, title) {
+
+      var opts = {};
+      if (typeof arguments[0] == 'object') {
+        // Called by options.
+        opts = arguments[0];
+        // overwrite cellSize and margin.
+        cellSize = opts.cellSize;
+        margin = opts.margin;
+        alt = opts.alt;
+        title = opts.title;
+      }
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      // Compose alt property surrogate
+      alt = (typeof alt === 'string') ? {text: alt} : alt || {};
+      alt.text = alt.text || null;
+      alt.id = (alt.text) ? alt.id || 'qrcode-description' : null;
+
+      // Compose title property surrogate
+      title = (typeof title === 'string') ? {text: title} : title || {};
+      title.text = title.text || null;
+      title.id = (title.text) ? title.id || 'qrcode-title' : null;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var c, mc, r, mr, qrSvg='', rect;
+
+      rect = 'l' + cellSize + ',0 0,' + cellSize +
+        ' -' + cellSize + ',0 0,-' + cellSize + 'z ';
+
+      qrSvg += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
+      qrSvg += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : '';
+      qrSvg += ' viewBox="0 0 ' + size + ' ' + size + '" ';
+      qrSvg += ' preserveAspectRatio="xMinYMin meet"';
+      qrSvg += (title.text || alt.text) ? ' role="img" aria-labelledby="' +
+          escapeXml([title.id, alt.id].join(' ').trim() ) + '"' : '';
+      qrSvg += '>';
+      qrSvg += (title.text) ? '<title id="' + escapeXml(title.id) + '">' +
+          escapeXml(title.text) + '</title>' : '';
+      qrSvg += (alt.text) ? '<description id="' + escapeXml(alt.id) + '">' +
+          escapeXml(alt.text) + '</description>' : '';
+      qrSvg += '<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>';
+      qrSvg += '<path d="';
+
+      for (r = 0; r < _this.getModuleCount(); r += 1) {
+        mr = r * cellSize + margin;
+        for (c = 0; c < _this.getModuleCount(); c += 1) {
+          if (_this.isDark(r, c) ) {
+            mc = c*cellSize+margin;
+            qrSvg += 'M' + mc + ',' + mr + rect;
+          }
+        }
+      }
+
+      qrSvg += '" stroke="transparent" fill="black"/>';
+      qrSvg += '</svg>';
+
+      return qrSvg;
+    };
+
+    _this.createDataURL = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      return createDataURL(size, size, function(x, y) {
+        if (min <= x && x < max && min <= y && y < max) {
+          var c = Math.floor( (x - min) / cellSize);
+          var r = Math.floor( (y - min) / cellSize);
+          return _this.isDark(r, c)? 0 : 1;
+        } else {
+          return 1;
+        }
+      } );
+    };
+
+    _this.createImgTag = function(cellSize, margin, alt) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+
+      var img = '';
+      img += '<img';
+      img += '\u0020src="';
+      img += _this.createDataURL(cellSize, margin);
+      img += '"';
+      img += '\u0020width="';
+      img += size;
+      img += '"';
+      img += '\u0020height="';
+      img += size;
+      img += '"';
+      if (alt) {
+        img += '\u0020alt="';
+        img += escapeXml(alt);
+        img += '"';
+      }
+      img += '/>';
+
+      return img;
+    };
+
+    var escapeXml = function(s) {
+      var escaped = '';
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charAt(i);
+        switch(c) {
+        case '<': escaped += '&lt;'; break;
+        case '>': escaped += '&gt;'; break;
+        case '&': escaped += '&amp;'; break;
+        case '"': escaped += '&quot;'; break;
+        default : escaped += c; break;
+        }
+      }
+      return escaped;
+    };
+
+    var _createHalfASCII = function(margin) {
+      var cellSize = 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r1, r2, p;
+
+      var blocks = {
+        '██': '█',
+        '█ ': '▀',
+        ' █': '▄',
+        '  ': ' '
+      };
+
+      var blocksLastLineNoMargin = {
+        '██': '▀',
+        '█ ': '▀',
+        ' █': ' ',
+        '  ': ' '
+      };
+
+      var ascii = '';
+      for (y = 0; y < size; y += 2) {
+        r1 = Math.floor((y - min) / cellSize);
+        r2 = Math.floor((y + 1 - min) / cellSize);
+        for (x = 0; x < size; x += 1) {
+          p = '█';
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) {
+            p = ' ';
+          }
+
+          if (min <= x && x < max && min <= y+1 && y+1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) {
+            p += ' ';
+          }
+          else {
+            p += '█';
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          ascii += (margin < 1 && y+1 >= max) ? blocksLastLineNoMargin[p] : blocks[p];
+        }
+
+        ascii += '\n';
+      }
+
+      if (size % 2 && margin > 0) {
+        return ascii.substring(0, ascii.length - size - 1) + Array(size+1).join('▀');
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.createASCII = function(cellSize, margin) {
+      cellSize = cellSize || 1;
+
+      if (cellSize < 2) {
+        return _createHalfASCII(margin);
+      }
+
+      cellSize -= 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r, p;
+
+      var white = Array(cellSize+1).join('██');
+      var black = Array(cellSize+1).join('  ');
+
+      var ascii = '';
+      var line = '';
+      for (y = 0; y < size; y += 1) {
+        r = Math.floor( (y - min) / cellSize);
+        line = '';
+        for (x = 0; x < size; x += 1) {
+          p = 1;
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) {
+            p = 0;
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          line += p ? white : black;
+        }
+
+        for (r = 0; r < cellSize; r += 1) {
+          ascii += line + '\n';
+        }
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.renderTo2dContext = function(context, cellSize) {
+      cellSize = cellSize || 2;
+      var length = _this.getModuleCount();
+      for (var row = 0; row < length; row++) {
+        for (var col = 0; col < length; col++) {
+          context.fillStyle = _this.isDark(row, col) ? 'black' : 'white';
+          context.fillRect(row * cellSize, col * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrcode.stringToBytes
+  //---------------------------------------------------------------------
+
+  qrcode.stringToBytesFuncs = {
+    'default' : function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        bytes.push(c & 0xff);
+      }
+      return bytes;
+    }
+  };
+
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['default'];
+
+  //---------------------------------------------------------------------
+  // qrcode.createStringToBytes
+  //---------------------------------------------------------------------
+
+  /**
+   * @param unicodeData base64 string of byte array.
+   * [16bit Unicode],[16bit Bytes], ...
+   * @param numChars
+   */
+  qrcode.createStringToBytes = function(unicodeData, numChars) {
+
+    // create conversion map.
+
+    var unicodeMap = function() {
+
+      var bin = base64DecodeInputStream(unicodeData);
+      var read = function() {
+        var b = bin.read();
+        if (b == -1) throw 'eof';
+        return b;
+      };
+
+      var count = 0;
+      var unicodeMap = {};
+      while (true) {
+        var b0 = bin.read();
+        if (b0 == -1) break;
+        var b1 = read();
+        var b2 = read();
+        var b3 = read();
+        var k = String.fromCharCode( (b0 << 8) | b1);
+        var v = (b2 << 8) | b3;
+        unicodeMap[k] = v;
+        count += 1;
+      }
+      if (count != numChars) {
+        throw count + ' != ' + numChars;
+      }
+
+      return unicodeMap;
+    }();
+
+    var unknownChar = '?'.charCodeAt(0);
+
+    return function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        if (c < 128) {
+          bytes.push(c);
+        } else {
+          var b = unicodeMap[s.charAt(i)];
+          if (typeof b == 'number') {
+            if ( (b & 0xff) == b) {
+              // 1byte
+              bytes.push(b);
+            } else {
+              // 2bytes
+              bytes.push(b >>> 8);
+              bytes.push(b & 0xff);
+            }
+          } else {
+            bytes.push(unknownChar);
+          }
+        }
+      }
+      return bytes;
+    };
+  };
+
+  //---------------------------------------------------------------------
+  // QRMode
+  //---------------------------------------------------------------------
+
+  var QRMode = {
+    MODE_NUMBER :    1 << 0,
+    MODE_ALPHA_NUM : 1 << 1,
+    MODE_8BIT_BYTE : 1 << 2,
+    MODE_KANJI :     1 << 3
+  };
+
+  //---------------------------------------------------------------------
+  // QRErrorCorrectionLevel
+  //---------------------------------------------------------------------
+
+  var QRErrorCorrectionLevel = {
+    L : 1,
+    M : 0,
+    Q : 3,
+    H : 2
+  };
+
+  //---------------------------------------------------------------------
+  // QRMaskPattern
+  //---------------------------------------------------------------------
+
+  var QRMaskPattern = {
+    PATTERN000 : 0,
+    PATTERN001 : 1,
+    PATTERN010 : 2,
+    PATTERN011 : 3,
+    PATTERN100 : 4,
+    PATTERN101 : 5,
+    PATTERN110 : 6,
+    PATTERN111 : 7
+  };
+
+  //---------------------------------------------------------------------
+  // QRUtil
+  //---------------------------------------------------------------------
+
+  var QRUtil = function() {
+
+    var PATTERN_POSITION_TABLE = [
+      [],
+      [6, 18],
+      [6, 22],
+      [6, 26],
+      [6, 30],
+      [6, 34],
+      [6, 22, 38],
+      [6, 24, 42],
+      [6, 26, 46],
+      [6, 28, 50],
+      [6, 30, 54],
+      [6, 32, 58],
+      [6, 34, 62],
+      [6, 26, 46, 66],
+      [6, 26, 48, 70],
+      [6, 26, 50, 74],
+      [6, 30, 54, 78],
+      [6, 30, 56, 82],
+      [6, 30, 58, 86],
+      [6, 34, 62, 90],
+      [6, 28, 50, 72, 94],
+      [6, 26, 50, 74, 98],
+      [6, 30, 54, 78, 102],
+      [6, 28, 54, 80, 106],
+      [6, 32, 58, 84, 110],
+      [6, 30, 58, 86, 114],
+      [6, 34, 62, 90, 118],
+      [6, 26, 50, 74, 98, 122],
+      [6, 30, 54, 78, 102, 126],
+      [6, 26, 52, 78, 104, 130],
+      [6, 30, 56, 82, 108, 134],
+      [6, 34, 60, 86, 112, 138],
+      [6, 30, 58, 86, 114, 142],
+      [6, 34, 62, 90, 118, 146],
+      [6, 30, 54, 78, 102, 126, 150],
+      [6, 24, 50, 76, 102, 128, 154],
+      [6, 28, 54, 80, 106, 132, 158],
+      [6, 32, 58, 84, 110, 136, 162],
+      [6, 26, 54, 82, 110, 138, 166],
+      [6, 30, 58, 86, 114, 142, 170]
+    ];
+    var G15 = (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
+    var G18 = (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
+    var G15_MASK = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
+
+    var _this = {};
+
+    var getBCHDigit = function(data) {
+      var digit = 0;
+      while (data != 0) {
+        digit += 1;
+        data >>>= 1;
+      }
+      return digit;
+    };
+
+    _this.getBCHTypeInfo = function(data) {
+      var d = data << 10;
+      while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
+        d ^= (G15 << (getBCHDigit(d) - getBCHDigit(G15) ) );
+      }
+      return ( (data << 10) | d) ^ G15_MASK;
+    };
+
+    _this.getBCHTypeNumber = function(data) {
+      var d = data << 12;
+      while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
+        d ^= (G18 << (getBCHDigit(d) - getBCHDigit(G18) ) );
+      }
+      return (data << 12) | d;
+    };
+
+    _this.getPatternPosition = function(typeNumber) {
+      return PATTERN_POSITION_TABLE[typeNumber - 1];
+    };
+
+    _this.getMaskFunction = function(maskPattern) {
+
+      switch (maskPattern) {
+
+      case QRMaskPattern.PATTERN000 :
+        return function(i, j) { return (i + j) % 2 == 0; };
+      case QRMaskPattern.PATTERN001 :
+        return function(i, j) { return i % 2 == 0; };
+      case QRMaskPattern.PATTERN010 :
+        return function(i, j) { return j % 3 == 0; };
+      case QRMaskPattern.PATTERN011 :
+        return function(i, j) { return (i + j) % 3 == 0; };
+      case QRMaskPattern.PATTERN100 :
+        return function(i, j) { return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 == 0; };
+      case QRMaskPattern.PATTERN101 :
+        return function(i, j) { return (i * j) % 2 + (i * j) % 3 == 0; };
+      case QRMaskPattern.PATTERN110 :
+        return function(i, j) { return ( (i * j) % 2 + (i * j) % 3) % 2 == 0; };
+      case QRMaskPattern.PATTERN111 :
+        return function(i, j) { return ( (i * j) % 3 + (i + j) % 2) % 2 == 0; };
+
+      default :
+        throw 'bad maskPattern:' + maskPattern;
+      }
+    };
+
+    _this.getErrorCorrectPolynomial = function(errorCorrectLength) {
+      var a = qrPolynomial([1], 0);
+      for (var i = 0; i < errorCorrectLength; i += 1) {
+        a = a.multiply(qrPolynomial([1, QRMath.gexp(i)], 0) );
+      }
+      return a;
+    };
+
+    _this.getLengthInBits = function(mode, type) {
+
+      if (1 <= type && type < 10) {
+
+        // 1 - 9
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 10;
+        case QRMode.MODE_ALPHA_NUM : return 9;
+        case QRMode.MODE_8BIT_BYTE : return 8;
+        case QRMode.MODE_KANJI     : return 8;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 27) {
+
+        // 10 - 26
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 12;
+        case QRMode.MODE_ALPHA_NUM : return 11;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 10;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 41) {
+
+        // 27 - 40
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 14;
+        case QRMode.MODE_ALPHA_NUM : return 13;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 12;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else {
+        throw 'type:' + type;
+      }
+    };
+
+    _this.getLostPoint = function(qrcode) {
+
+      var moduleCount = qrcode.getModuleCount();
+
+      var lostPoint = 0;
+
+      // LEVEL1
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount; col += 1) {
+
+          var sameCount = 0;
+          var dark = qrcode.isDark(row, col);
+
+          for (var r = -1; r <= 1; r += 1) {
+
+            if (row + r < 0 || moduleCount <= row + r) {
+              continue;
+            }
+
+            for (var c = -1; c <= 1; c += 1) {
+
+              if (col + c < 0 || moduleCount <= col + c) {
+                continue;
+              }
+
+              if (r == 0 && c == 0) {
+                continue;
+              }
+
+              if (dark == qrcode.isDark(row + r, col + c) ) {
+                sameCount += 1;
+              }
+            }
+          }
+
+          if (sameCount > 5) {
+            lostPoint += (3 + sameCount - 5);
+          }
+        }
+      };
+
+      // LEVEL2
+
+      for (var row = 0; row < moduleCount - 1; row += 1) {
+        for (var col = 0; col < moduleCount - 1; col += 1) {
+          var count = 0;
+          if (qrcode.isDark(row, col) ) count += 1;
+          if (qrcode.isDark(row + 1, col) ) count += 1;
+          if (qrcode.isDark(row, col + 1) ) count += 1;
+          if (qrcode.isDark(row + 1, col + 1) ) count += 1;
+          if (count == 0 || count == 4) {
+            lostPoint += 3;
+          }
+        }
+      }
+
+      // LEVEL3
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount - 6; col += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row, col + 1)
+              &&  qrcode.isDark(row, col + 2)
+              &&  qrcode.isDark(row, col + 3)
+              &&  qrcode.isDark(row, col + 4)
+              && !qrcode.isDark(row, col + 5)
+              &&  qrcode.isDark(row, col + 6) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount - 6; row += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row + 1, col)
+              &&  qrcode.isDark(row + 2, col)
+              &&  qrcode.isDark(row + 3, col)
+              &&  qrcode.isDark(row + 4, col)
+              && !qrcode.isDark(row + 5, col)
+              &&  qrcode.isDark(row + 6, col) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      // LEVEL4
+
+      var darkCount = 0;
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount; row += 1) {
+          if (qrcode.isDark(row, col) ) {
+            darkCount += 1;
+          }
+        }
+      }
+
+      var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+      lostPoint += ratio * 10;
+
+      return lostPoint;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // QRMath
+  //---------------------------------------------------------------------
+
+  var QRMath = function() {
+
+    var EXP_TABLE = new Array(256);
+    var LOG_TABLE = new Array(256);
+
+    // initialize tables
+    for (var i = 0; i < 8; i += 1) {
+      EXP_TABLE[i] = 1 << i;
+    }
+    for (var i = 8; i < 256; i += 1) {
+      EXP_TABLE[i] = EXP_TABLE[i - 4]
+        ^ EXP_TABLE[i - 5]
+        ^ EXP_TABLE[i - 6]
+        ^ EXP_TABLE[i - 8];
+    }
+    for (var i = 0; i < 255; i += 1) {
+      LOG_TABLE[EXP_TABLE[i] ] = i;
+    }
+
+    var _this = {};
+
+    _this.glog = function(n) {
+
+      if (n < 1) {
+        throw 'glog(' + n + ')';
+      }
+
+      return LOG_TABLE[n];
+    };
+
+    _this.gexp = function(n) {
+
+      while (n < 0) {
+        n += 255;
+      }
+
+      while (n >= 256) {
+        n -= 255;
+      }
+
+      return EXP_TABLE[n];
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrPolynomial
+  //---------------------------------------------------------------------
+
+  function qrPolynomial(num, shift) {
+
+    if (typeof num.length == 'undefined') {
+      throw num.length + '/' + shift;
+    }
+
+    var _num = function() {
+      var offset = 0;
+      while (offset < num.length && num[offset] == 0) {
+        offset += 1;
+      }
+      var _num = new Array(num.length - offset + shift);
+      for (var i = 0; i < num.length - offset; i += 1) {
+        _num[i] = num[i + offset];
+      }
+      return _num;
+    }();
+
+    var _this = {};
+
+    _this.getAt = function(index) {
+      return _num[index];
+    };
+
+    _this.getLength = function() {
+      return _num.length;
+    };
+
+    _this.multiply = function(e) {
+
+      var num = new Array(_this.getLength() + e.getLength() - 1);
+
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        for (var j = 0; j < e.getLength(); j += 1) {
+          num[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i) ) + QRMath.glog(e.getAt(j) ) );
+        }
+      }
+
+      return qrPolynomial(num, 0);
+    };
+
+    _this.mod = function(e) {
+
+      if (_this.getLength() - e.getLength() < 0) {
+        return _this;
+      }
+
+      var ratio = QRMath.glog(_this.getAt(0) ) - QRMath.glog(e.getAt(0) );
+
+      var num = new Array(_this.getLength() );
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        num[i] = _this.getAt(i);
+      }
+
+      for (var i = 0; i < e.getLength(); i += 1) {
+        num[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i) ) + ratio);
+      }
+
+      // recursive call
+      return qrPolynomial(num, 0).mod(e);
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // QRRSBlock
+  //---------------------------------------------------------------------
+
+  var QRRSBlock = function() {
+
+    var RS_BLOCK_TABLE = [
+
+      // L
+      // M
+      // Q
+      // H
+
+      // 1
+      [1, 26, 19],
+      [1, 26, 16],
+      [1, 26, 13],
+      [1, 26, 9],
+
+      // 2
+      [1, 44, 34],
+      [1, 44, 28],
+      [1, 44, 22],
+      [1, 44, 16],
+
+      // 3
+      [1, 70, 55],
+      [1, 70, 44],
+      [2, 35, 17],
+      [2, 35, 13],
+
+      // 4
+      [1, 100, 80],
+      [2, 50, 32],
+      [2, 50, 24],
+      [4, 25, 9],
+
+      // 5
+      [1, 134, 108],
+      [2, 67, 43],
+      [2, 33, 15, 2, 34, 16],
+      [2, 33, 11, 2, 34, 12],
+
+      // 6
+      [2, 86, 68],
+      [4, 43, 27],
+      [4, 43, 19],
+      [4, 43, 15],
+
+      // 7
+      [2, 98, 78],
+      [4, 49, 31],
+      [2, 32, 14, 4, 33, 15],
+      [4, 39, 13, 1, 40, 14],
+
+      // 8
+      [2, 121, 97],
+      [2, 60, 38, 2, 61, 39],
+      [4, 40, 18, 2, 41, 19],
+      [4, 40, 14, 2, 41, 15],
+
+      // 9
+      [2, 146, 116],
+      [3, 58, 36, 2, 59, 37],
+      [4, 36, 16, 4, 37, 17],
+      [4, 36, 12, 4, 37, 13],
+
+      // 10
+      [2, 86, 68, 2, 87, 69],
+      [4, 69, 43, 1, 70, 44],
+      [6, 43, 19, 2, 44, 20],
+      [6, 43, 15, 2, 44, 16],
+
+      // 11
+      [4, 101, 81],
+      [1, 80, 50, 4, 81, 51],
+      [4, 50, 22, 4, 51, 23],
+      [3, 36, 12, 8, 37, 13],
+
+      // 12
+      [2, 116, 92, 2, 117, 93],
+      [6, 58, 36, 2, 59, 37],
+      [4, 46, 20, 6, 47, 21],
+      [7, 42, 14, 4, 43, 15],
+
+      // 13
+      [4, 133, 107],
+      [8, 59, 37, 1, 60, 38],
+      [8, 44, 20, 4, 45, 21],
+      [12, 33, 11, 4, 34, 12],
+
+      // 14
+      [3, 145, 115, 1, 146, 116],
+      [4, 64, 40, 5, 65, 41],
+      [11, 36, 16, 5, 37, 17],
+      [11, 36, 12, 5, 37, 13],
+
+      // 15
+      [5, 109, 87, 1, 110, 88],
+      [5, 65, 41, 5, 66, 42],
+      [5, 54, 24, 7, 55, 25],
+      [11, 36, 12, 7, 37, 13],
+
+      // 16
+      [5, 122, 98, 1, 123, 99],
+      [7, 73, 45, 3, 74, 46],
+      [15, 43, 19, 2, 44, 20],
+      [3, 45, 15, 13, 46, 16],
+
+      // 17
+      [1, 135, 107, 5, 136, 108],
+      [10, 74, 46, 1, 75, 47],
+      [1, 50, 22, 15, 51, 23],
+      [2, 42, 14, 17, 43, 15],
+
+      // 18
+      [5, 150, 120, 1, 151, 121],
+      [9, 69, 43, 4, 70, 44],
+      [17, 50, 22, 1, 51, 23],
+      [2, 42, 14, 19, 43, 15],
+
+      // 19
+      [3, 141, 113, 4, 142, 114],
+      [3, 70, 44, 11, 71, 45],
+      [17, 47, 21, 4, 48, 22],
+      [9, 39, 13, 16, 40, 14],
+
+      // 20
+      [3, 135, 107, 5, 136, 108],
+      [3, 67, 41, 13, 68, 42],
+      [15, 54, 24, 5, 55, 25],
+      [15, 43, 15, 10, 44, 16],
+
+      // 21
+      [4, 144, 116, 4, 145, 117],
+      [17, 68, 42],
+      [17, 50, 22, 6, 51, 23],
+      [19, 46, 16, 6, 47, 17],
+
+      // 22
+      [2, 139, 111, 7, 140, 112],
+      [17, 74, 46],
+      [7, 54, 24, 16, 55, 25],
+      [34, 37, 13],
+
+      // 23
+      [4, 151, 121, 5, 152, 122],
+      [4, 75, 47, 14, 76, 48],
+      [11, 54, 24, 14, 55, 25],
+      [16, 45, 15, 14, 46, 16],
+
+      // 24
+      [6, 147, 117, 4, 148, 118],
+      [6, 73, 45, 14, 74, 46],
+      [11, 54, 24, 16, 55, 25],
+      [30, 46, 16, 2, 47, 17],
+
+      // 25
+      [8, 132, 106, 4, 133, 107],
+      [8, 75, 47, 13, 76, 48],
+      [7, 54, 24, 22, 55, 25],
+      [22, 45, 15, 13, 46, 16],
+
+      // 26
+      [10, 142, 114, 2, 143, 115],
+      [19, 74, 46, 4, 75, 47],
+      [28, 50, 22, 6, 51, 23],
+      [33, 46, 16, 4, 47, 17],
+
+      // 27
+      [8, 152, 122, 4, 153, 123],
+      [22, 73, 45, 3, 74, 46],
+      [8, 53, 23, 26, 54, 24],
+      [12, 45, 15, 28, 46, 16],
+
+      // 28
+      [3, 147, 117, 10, 148, 118],
+      [3, 73, 45, 23, 74, 46],
+      [4, 54, 24, 31, 55, 25],
+      [11, 45, 15, 31, 46, 16],
+
+      // 29
+      [7, 146, 116, 7, 147, 117],
+      [21, 73, 45, 7, 74, 46],
+      [1, 53, 23, 37, 54, 24],
+      [19, 45, 15, 26, 46, 16],
+
+      // 30
+      [5, 145, 115, 10, 146, 116],
+      [19, 75, 47, 10, 76, 48],
+      [15, 54, 24, 25, 55, 25],
+      [23, 45, 15, 25, 46, 16],
+
+      // 31
+      [13, 145, 115, 3, 146, 116],
+      [2, 74, 46, 29, 75, 47],
+      [42, 54, 24, 1, 55, 25],
+      [23, 45, 15, 28, 46, 16],
+
+      // 32
+      [17, 145, 115],
+      [10, 74, 46, 23, 75, 47],
+      [10, 54, 24, 35, 55, 25],
+      [19, 45, 15, 35, 46, 16],
+
+      // 33
+      [17, 145, 115, 1, 146, 116],
+      [14, 74, 46, 21, 75, 47],
+      [29, 54, 24, 19, 55, 25],
+      [11, 45, 15, 46, 46, 16],
+
+      // 34
+      [13, 145, 115, 6, 146, 116],
+      [14, 74, 46, 23, 75, 47],
+      [44, 54, 24, 7, 55, 25],
+      [59, 46, 16, 1, 47, 17],
+
+      // 35
+      [12, 151, 121, 7, 152, 122],
+      [12, 75, 47, 26, 76, 48],
+      [39, 54, 24, 14, 55, 25],
+      [22, 45, 15, 41, 46, 16],
+
+      // 36
+      [6, 151, 121, 14, 152, 122],
+      [6, 75, 47, 34, 76, 48],
+      [46, 54, 24, 10, 55, 25],
+      [2, 45, 15, 64, 46, 16],
+
+      // 37
+      [17, 152, 122, 4, 153, 123],
+      [29, 74, 46, 14, 75, 47],
+      [49, 54, 24, 10, 55, 25],
+      [24, 45, 15, 46, 46, 16],
+
+      // 38
+      [4, 152, 122, 18, 153, 123],
+      [13, 74, 46, 32, 75, 47],
+      [48, 54, 24, 14, 55, 25],
+      [42, 45, 15, 32, 46, 16],
+
+      // 39
+      [20, 147, 117, 4, 148, 118],
+      [40, 75, 47, 7, 76, 48],
+      [43, 54, 24, 22, 55, 25],
+      [10, 45, 15, 67, 46, 16],
+
+      // 40
+      [19, 148, 118, 6, 149, 119],
+      [18, 75, 47, 31, 76, 48],
+      [34, 54, 24, 34, 55, 25],
+      [20, 45, 15, 61, 46, 16]
+    ];
+
+    var qrRSBlock = function(totalCount, dataCount) {
+      var _this = {};
+      _this.totalCount = totalCount;
+      _this.dataCount = dataCount;
+      return _this;
+    };
+
+    var _this = {};
+
+    var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
+
+      switch(errorCorrectionLevel) {
+      case QRErrorCorrectionLevel.L :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+      case QRErrorCorrectionLevel.M :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+      case QRErrorCorrectionLevel.Q :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+      case QRErrorCorrectionLevel.H :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+      default :
+        return undefined;
+      }
+    };
+
+    _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
+
+      var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
+
+      if (typeof rsBlock == 'undefined') {
+        throw 'bad rs block @ typeNumber:' + typeNumber +
+            '/errorCorrectionLevel:' + errorCorrectionLevel;
+      }
+
+      var length = rsBlock.length / 3;
+
+      var list = [];
+
+      for (var i = 0; i < length; i += 1) {
+
+        var count = rsBlock[i * 3 + 0];
+        var totalCount = rsBlock[i * 3 + 1];
+        var dataCount = rsBlock[i * 3 + 2];
+
+        for (var j = 0; j < count; j += 1) {
+          list.push(qrRSBlock(totalCount, dataCount) );
+        }
+      }
+
+      return list;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrBitBuffer
+  //---------------------------------------------------------------------
+
+  var qrBitBuffer = function() {
+
+    var _buffer = [];
+    var _length = 0;
+
+    var _this = {};
+
+    _this.getBuffer = function() {
+      return _buffer;
+    };
+
+    _this.getAt = function(index) {
+      var bufIndex = Math.floor(index / 8);
+      return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+    };
+
+    _this.put = function(num, length) {
+      for (var i = 0; i < length; i += 1) {
+        _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+      }
+    };
+
+    _this.getLengthInBits = function() {
+      return _length;
+    };
+
+    _this.putBit = function(bit) {
+
+      var bufIndex = Math.floor(_length / 8);
+      if (_buffer.length <= bufIndex) {
+        _buffer.push(0);
+      }
+
+      if (bit) {
+        _buffer[bufIndex] |= (0x80 >>> (_length % 8) );
+      }
+
+      _length += 1;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrNumber
+  //---------------------------------------------------------------------
+
+  var qrNumber = function(data) {
+
+    var _mode = QRMode.MODE_NUMBER;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _data;
+
+      var i = 0;
+
+      while (i + 2 < data.length) {
+        buffer.put(strToNum(data.substring(i, i + 3) ), 10);
+        i += 3;
+      }
+
+      if (i < data.length) {
+        if (data.length - i == 1) {
+          buffer.put(strToNum(data.substring(i, i + 1) ), 4);
+        } else if (data.length - i == 2) {
+          buffer.put(strToNum(data.substring(i, i + 2) ), 7);
+        }
+      }
+    };
+
+    var strToNum = function(s) {
+      var num = 0;
+      for (var i = 0; i < s.length; i += 1) {
+        num = num * 10 + chatToNum(s.charAt(i) );
+      }
+      return num;
+    };
+
+    var chatToNum = function(c) {
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      }
+      throw 'illegal char :' + c;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrAlphaNum
+  //---------------------------------------------------------------------
+
+  var qrAlphaNum = function(data) {
+
+    var _mode = QRMode.MODE_ALPHA_NUM;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var s = _data;
+
+      var i = 0;
+
+      while (i + 1 < s.length) {
+        buffer.put(
+          getCode(s.charAt(i) ) * 45 +
+          getCode(s.charAt(i + 1) ), 11);
+        i += 2;
+      }
+
+      if (i < s.length) {
+        buffer.put(getCode(s.charAt(i) ), 6);
+      }
+    };
+
+    var getCode = function(c) {
+
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      } else if ('A' <= c && c <= 'Z') {
+        return c.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+      } else {
+        switch (c) {
+        case ' ' : return 36;
+        case '$' : return 37;
+        case '%' : return 38;
+        case '*' : return 39;
+        case '+' : return 40;
+        case '-' : return 41;
+        case '.' : return 42;
+        case '/' : return 43;
+        case ':' : return 44;
+        default :
+          throw 'illegal char :' + c;
+        }
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qr8BitByte
+  //---------------------------------------------------------------------
+
+  var qr8BitByte = function(data) {
+
+    var _mode = QRMode.MODE_8BIT_BYTE;
+    var _data = data;
+    var _bytes = qrcode.stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _bytes.length;
+    };
+
+    _this.write = function(buffer) {
+      for (var i = 0; i < _bytes.length; i += 1) {
+        buffer.put(_bytes[i], 8);
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrKanji
+  //---------------------------------------------------------------------
+
+  var qrKanji = function(data) {
+
+    var _mode = QRMode.MODE_KANJI;
+    var _data = data;
+
+    var stringToBytes = qrcode.stringToBytesFuncs['SJIS'];
+    if (!stringToBytes) {
+      throw 'sjis not supported.';
+    }
+    !function(c, code) {
+      // self test for sjis support.
+      var test = stringToBytes(c);
+      if (test.length != 2 || ( (test[0] << 8) | test[1]) != code) {
+        throw 'sjis not supported.';
+      }
+    }('\u53cb', 0x9746);
+
+    var _bytes = stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return ~~(_bytes.length / 2);
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _bytes;
+
+      var i = 0;
+
+      while (i + 1 < data.length) {
+
+        var c = ( (0xff & data[i]) << 8) | (0xff & data[i + 1]);
+
+        if (0x8140 <= c && c <= 0x9FFC) {
+          c -= 0x8140;
+        } else if (0xE040 <= c && c <= 0xEBBF) {
+          c -= 0xC140;
+        } else {
+          throw 'illegal char at ' + (i + 1) + '/' + c;
+        }
+
+        c = ( (c >>> 8) & 0xff) * 0xC0 + (c & 0xff);
+
+        buffer.put(c, 13);
+
+        i += 2;
+      }
+
+      if (i < data.length) {
+        throw 'illegal char at ' + (i + 1);
+      }
+    };
+
+    return _this;
+  };
+
+  //=====================================================================
+  // GIF Support etc.
+  //
+
+  //---------------------------------------------------------------------
+  // byteArrayOutputStream
+  //---------------------------------------------------------------------
+
+  var byteArrayOutputStream = function() {
+
+    var _bytes = [];
+
+    var _this = {};
+
+    _this.writeByte = function(b) {
+      _bytes.push(b & 0xff);
+    };
+
+    _this.writeShort = function(i) {
+      _this.writeByte(i);
+      _this.writeByte(i >>> 8);
+    };
+
+    _this.writeBytes = function(b, off, len) {
+      off = off || 0;
+      len = len || b.length;
+      for (var i = 0; i < len; i += 1) {
+        _this.writeByte(b[i + off]);
+      }
+    };
+
+    _this.writeString = function(s) {
+      for (var i = 0; i < s.length; i += 1) {
+        _this.writeByte(s.charCodeAt(i) );
+      }
+    };
+
+    _this.toByteArray = function() {
+      return _bytes;
+    };
+
+    _this.toString = function() {
+      var s = '';
+      s += '[';
+      for (var i = 0; i < _bytes.length; i += 1) {
+        if (i > 0) {
+          s += ',';
+        }
+        s += _bytes[i];
+      }
+      s += ']';
+      return s;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64EncodeOutputStream
+  //---------------------------------------------------------------------
+
+  var base64EncodeOutputStream = function() {
+
+    var _buffer = 0;
+    var _buflen = 0;
+    var _length = 0;
+    var _base64 = '';
+
+    var _this = {};
+
+    var writeEncoded = function(b) {
+      _base64 += String.fromCharCode(encode(b & 0x3f) );
+    };
+
+    var encode = function(n) {
+      if (n < 0) {
+        // error.
+      } else if (n < 26) {
+        return 0x41 + n;
+      } else if (n < 52) {
+        return 0x61 + (n - 26);
+      } else if (n < 62) {
+        return 0x30 + (n - 52);
+      } else if (n == 62) {
+        return 0x2b;
+      } else if (n == 63) {
+        return 0x2f;
+      }
+      throw 'n:' + n;
+    };
+
+    _this.writeByte = function(n) {
+
+      _buffer = (_buffer << 8) | (n & 0xff);
+      _buflen += 8;
+      _length += 1;
+
+      while (_buflen >= 6) {
+        writeEncoded(_buffer >>> (_buflen - 6) );
+        _buflen -= 6;
+      }
+    };
+
+    _this.flush = function() {
+
+      if (_buflen > 0) {
+        writeEncoded(_buffer << (6 - _buflen) );
+        _buffer = 0;
+        _buflen = 0;
+      }
+
+      if (_length % 3 != 0) {
+        // padding
+        var padlen = 3 - _length % 3;
+        for (var i = 0; i < padlen; i += 1) {
+          _base64 += '=';
+        }
+      }
+    };
+
+    _this.toString = function() {
+      return _base64;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64DecodeInputStream
+  //---------------------------------------------------------------------
+
+  var base64DecodeInputStream = function(str) {
+
+    var _str = str;
+    var _pos = 0;
+    var _buffer = 0;
+    var _buflen = 0;
+
+    var _this = {};
+
+    _this.read = function() {
+
+      while (_buflen < 8) {
+
+        if (_pos >= _str.length) {
+          if (_buflen == 0) {
+            return -1;
+          }
+          throw 'unexpected end of file./' + _buflen;
+        }
+
+        var c = _str.charAt(_pos);
+        _pos += 1;
+
+        if (c == '=') {
+          _buflen = 0;
+          return -1;
+        } else if (c.match(/^\s$/) ) {
+          // ignore if whitespace.
+          continue;
+        }
+
+        _buffer = (_buffer << 6) | decode(c.charCodeAt(0) );
+        _buflen += 6;
+      }
+
+      var n = (_buffer >>> (_buflen - 8) ) & 0xff;
+      _buflen -= 8;
+      return n;
+    };
+
+    var decode = function(c) {
+      if (0x41 <= c && c <= 0x5a) {
+        return c - 0x41;
+      } else if (0x61 <= c && c <= 0x7a) {
+        return c - 0x61 + 26;
+      } else if (0x30 <= c && c <= 0x39) {
+        return c - 0x30 + 52;
+      } else if (c == 0x2b) {
+        return 62;
+      } else if (c == 0x2f) {
+        return 63;
+      } else {
+        throw 'c:' + c;
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // gifImage (B/W)
+  //---------------------------------------------------------------------
+
+  var gifImage = function(width, height) {
+
+    var _width = width;
+    var _height = height;
+    var _data = new Array(width * height);
+
+    var _this = {};
+
+    _this.setPixel = function(x, y, pixel) {
+      _data[y * _width + x] = pixel;
+    };
+
+    _this.write = function(out) {
+
+      //---------------------------------
+      // GIF Signature
+
+      out.writeString('GIF87a');
+
+      //---------------------------------
+      // Screen Descriptor
+
+      out.writeShort(_width);
+      out.writeShort(_height);
+
+      out.writeByte(0x80); // 2bit
+      out.writeByte(0);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Global Color Map
+
+      // black
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+
+      // white
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+
+      //---------------------------------
+      // Image Descriptor
+
+      out.writeString(',');
+      out.writeShort(0);
+      out.writeShort(0);
+      out.writeShort(_width);
+      out.writeShort(_height);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Local Color Map
+
+      //---------------------------------
+      // Raster Data
+
+      var lzwMinCodeSize = 2;
+      var raster = getLZWRaster(lzwMinCodeSize);
+
+      out.writeByte(lzwMinCodeSize);
+
+      var offset = 0;
+
+      while (raster.length - offset > 255) {
+        out.writeByte(255);
+        out.writeBytes(raster, offset, 255);
+        offset += 255;
+      }
+
+      out.writeByte(raster.length - offset);
+      out.writeBytes(raster, offset, raster.length - offset);
+      out.writeByte(0x00);
+
+      //---------------------------------
+      // GIF Terminator
+      out.writeString(';');
+    };
+
+    var bitOutputStream = function(out) {
+
+      var _out = out;
+      var _bitLength = 0;
+      var _bitBuffer = 0;
+
+      var _this = {};
+
+      _this.write = function(data, length) {
+
+        if ( (data >>> length) != 0) {
+          throw 'length over';
+        }
+
+        while (_bitLength + length >= 8) {
+          _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
+          length -= (8 - _bitLength);
+          data >>>= (8 - _bitLength);
+          _bitBuffer = 0;
+          _bitLength = 0;
+        }
+
+        _bitBuffer = (data << _bitLength) | _bitBuffer;
+        _bitLength = _bitLength + length;
+      };
+
+      _this.flush = function() {
+        if (_bitLength > 0) {
+          _out.writeByte(_bitBuffer);
+        }
+      };
+
+      return _this;
+    };
+
+    var getLZWRaster = function(lzwMinCodeSize) {
+
+      var clearCode = 1 << lzwMinCodeSize;
+      var endCode = (1 << lzwMinCodeSize) + 1;
+      var bitLength = lzwMinCodeSize + 1;
+
+      // Setup LZWTable
+      var table = lzwTable();
+
+      for (var i = 0; i < clearCode; i += 1) {
+        table.add(String.fromCharCode(i) );
+      }
+      table.add(String.fromCharCode(clearCode) );
+      table.add(String.fromCharCode(endCode) );
+
+      var byteOut = byteArrayOutputStream();
+      var bitOut = bitOutputStream(byteOut);
+
+      // clear code
+      bitOut.write(clearCode, bitLength);
+
+      var dataIndex = 0;
+
+      var s = String.fromCharCode(_data[dataIndex]);
+      dataIndex += 1;
+
+      while (dataIndex < _data.length) {
+
+        var c = String.fromCharCode(_data[dataIndex]);
+        dataIndex += 1;
+
+        if (table.contains(s + c) ) {
+
+          s = s + c;
+
+        } else {
+
+          bitOut.write(table.indexOf(s), bitLength);
+
+          if (table.size() < 0xfff) {
+
+            if (table.size() == (1 << bitLength) ) {
+              bitLength += 1;
+            }
+
+            table.add(s + c);
+          }
+
+          s = c;
+        }
+      }
+
+      bitOut.write(table.indexOf(s), bitLength);
+
+      // end code
+      bitOut.write(endCode, bitLength);
+
+      bitOut.flush();
+
+      return byteOut.toByteArray();
+    };
+
+    var lzwTable = function() {
+
+      var _map = {};
+      var _size = 0;
+
+      var _this = {};
+
+      _this.add = function(key) {
+        if (_this.contains(key) ) {
+          throw 'dup key:' + key;
+        }
+        _map[key] = _size;
+        _size += 1;
+      };
+
+      _this.size = function() {
+        return _size;
+      };
+
+      _this.indexOf = function(key) {
+        return _map[key];
+      };
+
+      _this.contains = function(key) {
+        return typeof _map[key] != 'undefined';
+      };
+
+      return _this;
+    };
+
+    return _this;
+  };
+
+  var createDataURL = function(width, height, getPixel) {
+    var gif = gifImage(width, height);
+    for (var y = 0; y < height; y += 1) {
+      for (var x = 0; x < width; x += 1) {
+        gif.setPixel(x, y, getPixel(x, y) );
+      }
+    }
+
+    var b = byteArrayOutputStream();
+    gif.write(b);
+
+    var base64 = base64EncodeOutputStream();
+    var bytes = b.toByteArray();
+    for (var i = 0; i < bytes.length; i += 1) {
+      base64.writeByte(bytes[i]);
+    }
+    base64.flush();
+
+    return 'data:image/gif;base64,' + base64;
+  };
+
+  //---------------------------------------------------------------------
+  // returns qrcode function.
+
+  return qrcode;
+}();
+
+// multibyte support
+!function() {
+
+  qrcode.stringToBytesFuncs['UTF-8'] = function(s) {
+    // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
+    function toUTF8Array(str) {
+      var utf8 = [];
+      for (var i=0; i < str.length; i++) {
+        var charcode = str.charCodeAt(i);
+        if (charcode < 0x80) utf8.push(charcode);
+        else if (charcode < 0x800) {
+          utf8.push(0xc0 | (charcode >> 6),
+              0x80 | (charcode & 0x3f));
+        }
+        else if (charcode < 0xd800 || charcode >= 0xe000) {
+          utf8.push(0xe0 | (charcode >> 12),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+        // surrogate pair
+        else {
+          i++;
+          // UTF-16 encodes 0x10000-0x10FFFF by
+          // subtracting 0x10000 and splitting the
+          // 20 bits of 0x0-0xFFFFF into two halves
+          charcode = 0x10000 + (((charcode & 0x3ff)<<10)
+            | (str.charCodeAt(i) & 0x3ff));
+          utf8.push(0xf0 | (charcode >>18),
+              0x80 | ((charcode>>12) & 0x3f),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+      }
+      return utf8;
+    }
+    return toUTF8Array(s);
+  };
+
+}();
+
+(function (factory) {
+  if (typeof define === 'function' && define.amd) {
+      define([], factory);
+  } else if (typeof exports === 'object') {
+      module.exports = factory();
+  }
+}(function () {
+    return qrcode;
+}));
+</script>
+<script>
+"use strict";
+/* ═══════════════ STORAGE ═══════════════ */
+const KEY = "tripSplitter.db.v1", SKEY = "tripSplitter.session.v1", OKEY = "tripSplitter.online.v1";
+const TABLES = ["all_users","trips","members","expenses","settlements","notifications","packing","online_status"];
+const BLOB_COLS = {all_users:["avatar_blob"], expenses:["image_blob"], settlements:["slip_blob"]};
+const MAX_UPLOAD_MB = 8, NAME_MAXLEN = 24;
+const blank = () => Object.fromEntries(TABLES.map(t => [t, []]));
+function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function lsSet(k,v){ try { localStorage.setItem(k,v); return true; } catch(e){ return false; } }
+let DB = (() => { try { const d = JSON.parse(lsGet(KEY)); if (d && d.trips) { TABLES.forEach(t => d[t] = d[t] || []); return d; } } catch(e){} return blank(); })();
+let S = (() => { try { return Object.assign({me:null,menu:"home",trip_id:null,tabs:{},chat_partner:null}, JSON.parse(lsGet(SKEY))||{}); } catch(e){ return {me:null,menu:"home",trip_id:null,tabs:{},chat_partner:null}; } })();
+const UI = {q:"", payer:"ทุกคน", cat:"ทุกหมวด", open:new Set(), loginMode:"login", mapMode:"osm", crossOpen:true, err:{}};
+function save(){
+  if (!lsSet(KEY, JSON.stringify(DB))) { flash("พื้นที่เก็บข้อมูลของเบราว์เซอร์เต็ม — สำรองข้อมูลแล้วลบรูปสลิปเก่าบางส่วน", "err"); return false; }
+  return true;
+}
+function saveS(){ lsSet(SKEY, JSON.stringify(S)); }
+function nextId(t){ return DB[t].reduce((m,r) => Math.max(m, r.id||0), 0) + 1; }
+
+/* ═══════════════ HELPERS ═══════════════ */
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = n => Number(n||0).toLocaleString("en-US",{maximumFractionDigits:0});
+const sum = a => a.reduce((x,y) => x+y, 0);
+const r2 = n => Math.round(n*100)/100;
+function nowStr(){
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  return `${p.year}-${p.month}-${p.day} ${p.hour==="24"?"00":p.hour}:${p.minute}:${p.second}`;
+}
+const todayStr = () => nowStr().slice(0,10);
+function validName(n){
+  n = (n||"").trim();
+  if (!n) return [false,"กรุณากรอกชื่อ"];
+  if (n.length > NAME_MAXLEN) return [false,`ชื่อยาวเกิน ${NAME_MAXLEN} ตัวอักษร`];
+  if (n.includes(",")) return [false,"ชื่อห้ามมีเครื่องหมายจุลภาค ( , )"];
+  if (/[<>&"']/.test(n)) return [false,"ชื่อห้ามมีอักขระ < > & \" '"];
+  return [true,""];
+}
+const splitList = s => String(s||"").split(",").filter(Boolean);
+
+/* PIN — PBKDF2-SHA256 100k รอบ เข้ากันได้กับไฟล์สำรองจากเวอร์ชัน Streamlit */
+const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+async function hashPin(pin, salt){
+  salt = salt || hex(crypto.getRandomValues(new Uint8Array(16)));
+  if (!(crypto && crypto.subtle)) throw new Error("เบราว์เซอร์นี้ไม่รองรับการเข้ารหัส (ต้องเปิดผ่าน https หรือไฟล์ในเครื่อง)");
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(String(pin)), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({name:"PBKDF2", salt:enc.encode(salt), iterations:100000, hash:"SHA-256"}, key, 256);
+  return [hex(bits), salt];
+}
+async function checkPin(pin, h, salt){
+  if (!h || !salt) return false;
+  const [c] = await hashPin(pin, salt);
+  let d = c.length ^ h.length; for (let i=0;i<Math.min(c.length,h.length);i++) d |= c.charCodeAt(i) ^ h.charCodeAt(i);
+  return d === 0;
+}
+
+/* รูป */
+function readImage(file, {max=800, q=0.7, square=false}={}){
+  return new Promise((res, rej) => {
+    if (!file) return res(null);
+    if (file.size > MAX_UPLOAD_MB*1024*1024) return rej(new Error(`ไฟล์ใหญ่เกิน ${MAX_UPLOAD_MB} MB`));
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      let sx=0, sy=0, sw=img.naturalWidth, sh=img.naturalHeight, w, h;
+      if (square){ const s=Math.min(sw,sh); sx=(sw-s)/2; sy=(sh-s)/2; sw=sh=s; w=h=max; }
+      else { const k=Math.min(1, max/Math.max(sw,sh)); w=Math.round(sw*k); h=Math.round(sh*k); }
+      const c = document.createElement("canvas"); c.width=w; c.height=h;
+      const x = c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.drawImage(img,sx,sy,sw,sh,0,0,w,h);
+      URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", q));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("อ่านไฟล์รูปไม่ได้")); };
+    img.src = url;
+  });
+}
+
+const PERSON_COLORS = ["#1d4ed8","#0891b2","#7c3aed","#c026d3","#db2777","#e11d48","#ea580c","#ca8a04","#16a34a","#0d9488","#4f46e5","#9333ea"];
+function personColor(n){ if(!n) return "#6b7280"; let h=2166136261; for (const ch of String(n)) { h ^= ch.codePointAt(0); h = Math.imul(h,16777619)>>>0; } return PERSON_COLORS[h % PERSON_COLORS.length]; }
+const userBy = n => DB.all_users.find(u => u.name === n);
+function avatar(name, size=32, font=12, bg){
+  const u = userBy(name), img = u && u.avatar_blob;
+  const st = `width:${size}px;height:${size}px;font-size:${font}px;`;
+  if (img) return `<div class="av" style="${st}background-image:url(${img})"></div>`;
+  return `<div class="av" style="${st}background:${bg||personColor(name)}">${esc((name||"?")[0].toUpperCase())}</div>`;
+}
+
+
+/* ═══════════════ MONEY LOGIC ═══════════════ */
+function splitAmounts(amount, names, detail, seed=0){
+  names = names.filter(Boolean); if (!names.length) return {};
+  const total = Math.round(Number(amount)*100);
+  let mode = "equal", values = {};
+  if (detail){ try { const d = typeof detail === "string" ? JSON.parse(detail) : detail; mode = d.mode || "equal"; values = d.values || {}; } catch(e){ mode="equal"; values={}; } }
+  let out = {};
+  if (mode === "amount"){
+    const fixed = {};
+    names.forEach(n => { if (n in values) fixed[n] = Math.round(Number(values[n])*100); });
+    const rest = names.filter(n => !(n in fixed)), left = total - sum(Object.values(fixed));
+    if (rest.length && left > 0){
+      const base = Math.floor(left/rest.length), rem = left % rest.length;
+      out = {...fixed}; rest.forEach((n,i) => out[n] = base + (i<rem?1:0));
+    } else {
+      out = {...fixed}; rest.forEach(n => out[n] = 0);
+      const diff = total - sum(Object.values(out)), ks = Object.keys(fixed);
+      if (diff && ks.length) for (let i=0;i<Math.abs(diff);i++) out[ks[i%ks.length]] += diff>0 ? 1 : -1;
+    }
+  } else if (mode === "share"){
+    let w = {}; names.forEach(n => w[n] = Math.max(0, Number(values[n] ?? 1) || 0));
+    let tw = sum(Object.values(w));
+    if (tw <= 0){ names.forEach(n => w[n] = 1); tw = names.length; }
+    const raw = {}; names.forEach(n => { raw[n] = total*w[n]/tw; out[n] = Math.floor(raw[n]); });
+    const rem = total - sum(Object.values(out));
+    const order = [...names].sort((a,b) => ((raw[b]-Math.floor(raw[b])) - (raw[a]-Math.floor(raw[a]))) || (a<b?-1:a>b?1:0));
+    for (let i=0;i<rem;i++) out[order[i%order.length]] += 1;
+  } else {
+    const base = Math.floor(total/names.length), rem = total % names.length, k = ((seed % names.length)+names.length)%names.length;
+    const order = names.slice(k).concat(names.slice(0,k));
+    names.forEach(n => out[n] = base); for (let i=0;i<rem;i++) out[order[i]] += 1;
+  }
+  const r = {}; names.forEach(n => r[n] = (out[n]||0)/100); return r;
+}
+function computeNet(tid, members){
+  const exps = DB.expenses.filter(e => e.trip_id === tid);
+  const paid = DB.settlements.filter(p => p.trip_id === tid).sort((a,b) => b.id-a.id);
+  const net = {}; const add = (m,v) => { if (m) net[m] = (net[m]||0) + v; };
+  members.forEach(m => add(m,0));
+  exps.forEach(e => { add(e.payer_name,0); splitList(e.split_members).forEach(m => add(m,0)); });
+  paid.forEach(p => { add(p.debtor,0); add(p.creditor,0); });
+  exps.forEach(e => { add(e.payer_name, e.amount); const sh = splitAmounts(e.amount, splitList(e.split_members), e.split_detail, e.id); for (const m in sh) add(m, -sh[m]); });
+  paid.forEach(p => { add(p.debtor, p.amount); add(p.creditor, -p.amount); });
+  return {net, exps, paid};
+}
+function settlePlan(net){
+  const dbt = Object.entries(net).filter(([,b]) => b < -0.01).map(([m,b]) => [m,b]).sort((a,b) => a[1]-b[1]);
+  const crd = Object.entries(net).filter(([,b]) => b > 0.01).map(([m,b]) => [m,b]).sort((a,b) => b[1]-a[1]);
+  const pairs = []; let i = 0;
+  while (i < dbt.length){
+    const j = crd.findIndex(c => Math.abs(c[1]+dbt[i][1]) < 0.01);
+    if (j >= 0){ pairs.push([dbt[i][0], crd[j][0], Math.abs(dbt[i][1])]); crd.splice(j,1); dbt.splice(i,1); } else i++;
+  }
+  while (dbt.length && crd.length){
+    const a = Math.min(Math.abs(dbt[0][1]), crd[0][1]);
+    pairs.push([dbt[0][0], crd[0][0], a]); dbt[0][1] += a; crd[0][1] -= a;
+    if (Math.abs(dbt[0][1]) < 0.01) dbt.shift();
+    if (Math.abs(crd[0][1]) < 0.01) crd.shift();
+  }
+  return pairs.map(([d,c,a]) => [d,c,r2(a)]);
+}
+
+/* ═══════════════ PROMPTPAY ═══════════════ */
+function ppCrc(s){ let c=0xFFFF; for (let i=0;i<s.length;i++){ c ^= s.charCodeAt(i)<<8; for (let k=0;k<8;k++) c = (c & 0x8000) ? ((c<<1)^0x1021)&0xFFFF : (c<<1)&0xFFFF; } return c.toString(16).toUpperCase().padStart(4,"0"); }
+const tlv = (t,v) => t + String(v.length).padStart(2,"0") + v;
+function ppTarget(raw){
+  const d = String(raw||"").replace(/\D/g,"");
+  if (d.length===13) return ["02",d];
+  if (d.length===10 && d[0]==="0") return ["01","0066"+d.slice(1)];
+  if (d.length===9) return ["01","0066"+d];
+  if (d.length===11 && d.startsWith("66")) return ["01","00"+d];
+  if (d.length===15) return ["03",d];
+  return [null,null];
+}
+function ppPayload(raw, amount){
+  const [tag,val] = ppTarget(raw); if (!tag) return null;
+  let p = tlv("00","01") + tlv("01", amount ? "12" : "11") + tlv("29", tlv("00","A000000677010111") + tlv(tag,val)) + tlv("53","764");
+  if (amount) p += tlv("54", Number(amount).toFixed(2));
+  p += tlv("58","TH") + "6304";
+  return p + ppCrc(p);
+}
+const QR_CACHE = {};
+function qrCanvas(text, box=8, border=3, color="#000"){
+  const q = qrcode(0, "M"); q.addData(text); q.make();
+  const n = q.getModuleCount(), size = (n + border*2)*box;
+  const c = document.createElement("canvas"); c.width = c.height = size;
+  const x = c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,size,size); x.fillStyle = color;
+  for (let r=0;r<n;r++) for (let col=0;col<n;col++) if (q.isDark(r,col)) x.fillRect((col+border)*box,(r+border)*box,box,box);
+  return c;
+}
+function ppQrUri(pp, amt, box=6, color="#0f2a6b"){
+  const k = `${pp}|${amt}|${box}|${color}`;
+  if (!(k in QR_CACHE)){ const p = ppPayload(pp, amt); QR_CACHE[k] = p ? qrCanvas(p, box, 2, color).toDataURL("image/png") : null; }
+  return QR_CACHE[k];
+}
+function download(name, url){ const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+
+/* ═══════════════ CONSTANTS ═══════════════ */
+const BANK_LIST = ["-- เลือกธนาคาร --","กสิกรไทย (KBank)","ไทยพาณิชย์ (SCB)","กรุงไทย (KTB)","กรุงเทพ (BBL)","กรุงศรีอยุธยา (BAY)","ทหารไทยธนชาต (TTB)","ออมสิน (GSB)","ธ.ก.ส.","ยูโอบี (UOB)"];
+const CATEGORIES = [["อาหาร","🍜","#ea580c"],["ที่พัก","🏕️","#7c3aed"],["เดินทาง","🚗","#0891b2"],["อุปกรณ์","🎒","#16a34a"],["เครื่องดื่ม","🍺","#ca8a04"],["อื่น ๆ","📦","#6b7280"]];
+const CAT_NAMES = CATEGORIES.map(c=>c[0]), CAT_ICON = Object.fromEntries(CATEGORIES.map(c=>[c[0],c[1]])), CAT_COLOR = Object.fromEntries(CATEGORIES.map(c=>[c[0],c[2]]));
+const catOf = e => CAT_NAMES.includes(e.category) ? e.category : "อื่น ๆ";
+const WMO = {0:["☀️","แดดจัด"],1:["🌤️","แดดบางส่วน"],2:["⛅","มีเมฆบางส่วน"],3:["☁️","เมฆมาก"],45:["🌫️","หมอก"],48:["🌫️","หมอกน้ำแข็ง"],51:["🌦️","ฝนปรอยเบา"],53:["🌦️","ฝนปรอย"],55:["🌦️","ฝนปรอยหนัก"],61:["🌧️","ฝนเบา"],63:["🌧️","ฝนปานกลาง"],65:["🌧️","ฝนหนัก"],71:["🌨️","หิมะเบา"],73:["🌨️","หิมะ"],75:["🌨️","หิมะหนัก"],80:["🌦️","ฝนซู่เบา"],81:["🌧️","ฝนซู่"],82:["⛈️","ฝนซู่หนัก"],95:["⛈️","พายุฝนฟ้าคะนอง"],96:["⛈️","พายุลูกเห็บ"],99:["⛈️","พายุลูกเห็บหนัก"]};
+const BACKUP_TAB = 4;
+
+/* ═══════════════ ONLINE (ระหว่างแท็บ/หน้าต่างในเครื่องเดียวกัน) ═══════════════ */
+function onlineMap(){ try { return JSON.parse(lsGet(OKEY)) || {}; } catch(e){ return {}; } }
+function heartbeat(){ if (!S.me) return; const m = onlineMap(); m[S.me] = Date.now(); lsSet(OKEY, JSON.stringify(m)); }
+function onlineNow(){ const m = onlineMap(), t = Date.now(); return Object.keys(m).filter(n => t - m[n] < 60000 && userBy(n)); }
+function setOffline(n){ const m = onlineMap(); delete m[n]; lsSet(OKEY, JSON.stringify(m)); }
+
+/* ═══════════════ CONTEXT ═══════════════ */
+function ctx(){
+  if (S.me && !userBy(S.me)) { S.me = null; saveS(); }
+  const trips = DB.trips.filter(t => t.status === 0 || t.status === 2).sort((a,b) => (a.status-b.status) || (b.id-a.id));
+  if (!trips.some(t => t.id === S.trip_id)) { S.trip_id = trips.length ? trips[0].id : null; saveS(); }
+  const trip = trips.find(t => t.id === S.trip_id) || null;
+  const members = trip ? DB.members.filter(m => m.trip_id === trip.id).map(m => m.name) : [];
+  const unread = (S.me && trip) ? DB.notifications.filter(n => n.trip_id===trip.id && n.to_user===S.me && !n.is_read).length : 0;
+  return {me:S.me, trips, trip, tid: trip ? trip.id : null, members, closed: !!trip && trip.status === 2, unread, online: onlineNow()};
+}
+const tripDisp = t => t.trip_date ? `${t.name}  (${t.trip_date})` : t.name;
+function notify(tid, to, msg, from="ระบบสรุปยอด", auto=1){
+  DB.notifications.push({id:nextId("notifications"), trip_id:tid, to_user:to, from_user:from, message:msg, timestamp:nowStr(), is_auto:auto, is_read:0});
+}
+
+function packSyncPrice(c, p, amount){
+  const label = p.item + (p.qty ? ` (${p.qty})` : "");
+  const payer = c.members.includes(p.assignee) ? p.assignee : (c.members.includes(c.me) ? c.me : c.members[0]);
+  if (!c.members.length) return [false, "ยังไม่มีสมาชิกในทริป"];
+  amount = r2(Number(amount)||0);
+  let e = p.expense_id ? DB.expenses.find(x => x.id === p.expense_id) : null;
+  if (p.expense_id && !e) p.expense_id = null;
+  if (e && amount <= 0){ DB.expenses = DB.expenses.filter(x => x.id !== e.id); p.expense_id = null; return [true, `ยกเลิกบิลของ '${label}' แล้ว`]; }
+  if (amount <= 0) return [false, ""];
+  let act = "บันทึก";
+  if (e){ Object.assign(e, {description:label, amount, payer_name:payer}); act = "แก้ยอด"; }
+  else {
+    e = {id:nextId("expenses"), trip_id:c.tid, description:label, amount, payer_name:payer, split_members:c.members.join(","), image_blob:null, split_detail:null, category:"อุปกรณ์"};
+    DB.expenses.push(e); p.expense_id = e.id; p.done = 1;
+  }
+  const sh = splitAmounts(amount, splitList(e.split_members), e.split_detail, e.id);
+  splitList(e.split_members).forEach(m => { if (m !== payer) notify(c.tid, m, `🎒 ของแคมป์ (${act}): '${label}'\n💰 ${fmt(amount)} บาท | จ่ายโดย: ${payer}\n💸 ส่วนคุณ: ${fmt(sh[m]||0)} บาท`); });
+  return [true, `${act} '${label}' ${fmt(amount)} ฿ · จ่ายโดย ${payer}`];
+}
+function parseLatLon(t){
+  t = String(t||"");
+  const m = t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || t.match(/[?&]q=(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || t.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+  if (!m) return [null,null];
+  const la = parseFloat(m[1]), lo = parseFloat(m[2]);
+  return (la>=-90 && la<=90 && lo>=-180 && lo<=180) ? [la,lo] : [null,null];
+}
+const WX = {};
+async function loadWx(lat, lon){
+  const k = `${lat},${lon}`; WX[k] = {loading:true};
+  try {
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,sunrise,sunset&timezone=Asia%2FBangkok&forecast_days=7`;
+    const r = await fetch(u); if (!r.ok) throw new Error(`เรียกข้อมูลไม่สำเร็จ (${r.status})`);
+    const j = await r.json(); if (!j.daily) throw new Error("ไม่มีข้อมูลพยากรณ์สำหรับพิกัดนี้");
+    WX[k] = {data:j.daily, t:Date.now()};
+  } catch(e){ WX[k] = {err: e.message === "Failed to fetch" ? "ต่ออินเทอร์เน็ตไม่ได้" : e.message, t:Date.now()}; }
+  const el = document.getElementById("wx"); if (el) el.innerHTML = wxHtml(lat, lon);
+}
+async function offlineSheet(c){
+  try { await document.fonts.ready; } catch(e){}
+  const {net, exps} = computeNet(c.tid, c.members), plan = settlePlan(net);
+  const packs = DB.packing.filter(p => p.trip_id === c.tid).sort((a,b) => (a.done-b.done)||(a.id-b.id));
+  const W = 820, cv = document.createElement("canvas"); cv.width = W; cv.height = 2600;
+  const x = cv.getContext("2d"), F = (s,w=500) => `${w} ${s}px 'IBM Plex Sans Thai','Kanit',Tahoma,sans-serif`;
+  x.fillStyle = "#fff"; x.fillRect(0,0,W,cv.height); x.textBaseline = "top";
+  const text = (t,X,Y,f,col) => { x.font = f; x.fillStyle = col; x.fillText(t,X,Y); };
+  x.fillStyle = "#1d4ed8"; x.fillRect(0,0,W,100);
+  text(c.trip.name||"ทริป", 28, 14, F(36,700), "#fff");
+  text(`${c.trip.trip_date||""}   ·   ${c.members.length} คน   ·   ${exps.length} บิล`, 30, 64, F(18), "#bfdbfe");
+  let y = 122; const mine = net[c.me]||0;
+  if (mine < -0.01){ text("คุณต้องจ่าย",28,y,F(18),"#6b7280"); text(`${fmt(-mine)} บาท`,28,y+24,F(38,700),"#dc2626"); }
+  else if (mine > 0.01){ text("คุณจะได้คืน",28,y,F(18),"#6b7280"); text(`${fmt(mine)} บาท`,28,y+24,F(38,700),"#16a34a"); }
+  else text("เคลียร์หมดแล้ว",28,y+24,F(38,700),"#1d4ed8");
+  y += 92;
+  const hr = () => { x.fillStyle = "#dbeafe"; x.fillRect(28,y,W-56,2); y += 16; };
+  hr(); text("แผนโอนเงิน",28,y,F(23,600),"#000"); y += 36;
+  if (!plan.length){ text("ไม่มีใครต้องโอนให้ใคร",36,y,F(18),"#6b7280"); y += 30; }
+  plan.forEach(([d,cr,a]) => { const hl = c.me===d||c.me===cr; text(`${d}  →  ${cr}`,36,y,F(18),hl?"#000":"#6b7280"); x.textAlign="right"; text(`${fmt(a)} บาท`,W-36,y,F(18,600),hl?"#dc2626":"#9ca3af"); x.textAlign="left"; y += 32; });
+  const mineRow = plan.find(([d,cr]) => d === c.me && (userBy(cr)||{}).promptpay);
+  if (mineRow){
+    const [, cr, a] = mineRow, p = ppPayload(userBy(cr).promptpay, a);
+    if (p){ y += 8; text(`สแกนโอนให้ ${cr}  (${fmt(a)} บาท)`,28,y,F(18,600),"#000"); const q = qrCanvas(p,5,3); x.drawImage(q,28,y+28,220,220); y += 28+220+12; }
+  }
+  if (packs.length){
+    hr(); text("ของที่ต้องหิ้ว",28,y,F(23,600),"#000"); y += 36;
+    packs.forEach(p => { const line = `${p.done?"☑":"☐"} ${p.item}${p.qty?` (${p.qty})`:""} — ${p.assignee||"ยังไม่มีคนรับ"}`; text(line.slice(0,74),36,y,F(18),p.done?"#9ca3af":"#000"); y += 28; });
+  }
+  const out = document.createElement("canvas"); out.width = W; out.height = Math.min(y+26, 2600);
+  out.getContext("2d").drawImage(cv,0,0);
+  download(`trip_${c.tid}_offline.png`, out.toDataURL("image/png"));
+}
+const toB64 = v => (typeof v === "string" && v.startsWith("data:")) ? {__b64__: v.slice(v.indexOf(",")+1)} : v;
+const fromB64 = o => o.__b64__.startsWith("iVBOR") ? "data:image/png;base64,"+o.__b64__ : "data:image/jpeg;base64,"+o.__b64__;
+function exportBackup(){
+  const out = {exported_at:nowStr(), version:1, data:{}};
+  TABLES.forEach(t => {
+    if (t === "online_status") { const m = onlineMap(); out.data[t] = Object.keys(m).map(n => ({name:n, last_seen:new Date(m[n]).toISOString()})); return; }
+    out.data[t] = DB[t].map(r => { const d = {...r}; (BLOB_COLS[t]||[]).forEach(k => d[k] = toB64(d[k])); return d; });
+  });
+  const blob = new Blob([JSON.stringify(out, null, 1)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  download(`trip_backup_${nowStr().slice(0,16).replace(/[-: ]/g,"").replace(/^(\d{8})/,"$1_")}.json`, url);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function importBackup(text, wipe){
+  let data; try { data = JSON.parse(text).data; if (!data) throw 0; } catch(e){ return [false, "ไฟล์ไม่ถูกต้อง"]; }
+  const nd = wipe ? blank() : JSON.parse(JSON.stringify(DB));
+  for (const t of TABLES){
+    if (t === "online_status" || !Array.isArray(data[t])) continue;
+    for (let row of data[t]){
+      row = {...row}; for (const k in row) if (row[k] && typeof row[k] === "object" && "__b64__" in row[k]) row[k] = fromB64(row[k]);
+      ["is_auto","is_read","done","status"].forEach(k => { if (k in row) row[k] = Number(row[k])||0; });
+      if (t === "all_users") nd[t] = nd[t].filter(r => r.name !== row.name);
+      if (t === "members") nd[t] = nd[t].filter(r => !(r.trip_id===row.trip_id && r.name===row.name));
+      nd[t] = nd[t].filter(r => r.id !== row.id); nd[t].push(row);
+    }
+    nd[t].sort((a,b) => a.id-b.id);
+  }
+  const old = DB; DB = nd;
+  if (!save()) { DB = old; return [false, "พื้นที่เก็บข้อมูลไม่พอ"]; }
+  return [true, "กู้คืนข้อมูลเรียบร้อย"];
+}
+
+function renameUser(old, nw){
+  const [ok, err] = validName(nw); if (!ok) return [false, err];
+  if (userBy(nw)) return [false, "มีคนใช้ชื่อนี้แล้ว"];
+  const sw = v => v === old ? nw : v;
+  DB.all_users.forEach(u => u.name = sw(u.name));
+  DB.members.forEach(m => m.name = sw(m.name));
+  DB.expenses.forEach(e => { e.payer_name = sw(e.payer_name); e.split_members = splitList(e.split_members).map(sw).join(",");
+    if (e.split_detail){ try { const d = JSON.parse(e.split_detail); if (d.values && old in d.values){ d.values[nw] = d.values[old]; delete d.values[old]; e.split_detail = JSON.stringify(d); } } catch(x){} } });
+  DB.settlements.forEach(s => { s.debtor = sw(s.debtor); s.creditor = sw(s.creditor); });
+  DB.notifications.forEach(n => { n.to_user = sw(n.to_user); n.from_user = sw(n.from_user); });
+  DB.packing.forEach(p => { p.assignee = p.assignee ? sw(p.assignee) : p.assignee; p.added_by = sw(p.added_by); });
+  DB.trips.forEach(t => t.created_by = sw(t.created_by));
+  setOffline(old);
+  return [true, ""];
+}
+/* ═══════════════ ICONS ═══════════════ */
+const IC = {
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9v12h13V9"/><path d="M10 21v-6h4v6"/>',
+  receipt:'<path d="M5 3h14v18l-2.5-1.6L14 21l-2-1.6L10 21l-2.5-1.6L5 21z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  chat:'<path d="M20.5 11.5a8.5 8.5 0 0 1-12.3 7.6L3.5 20.5l1.4-4.4A8.5 8.5 0 1 1 20.5 11.5z"/>',
+  grid:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
+  chev:'<path d="m6 9 6 6 6-6"/>', back:'<path d="M15 5l-7 7 7 7"/>', x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  send:'<path d="M21 3 10 14"/><path d="M21 3 14.5 21l-4.5-7-7-4.5z"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
+  dl:'<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+  wallet:'<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4"/><rect x="4" y="9" width="17" height="11" rx="2.5"/><circle cx="16" cy="14.5" r="1.3"/>',
+  share:'<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"/>',
+  bell:'<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+};
+const ic = (n, cls="") => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
+
+/* ═══════════════ TOAST ═══════════════ */
+function flash(msg, kind="ok"){
+  if (!msg) return;
+  document.querySelectorAll(".toast").forEach(e => e.remove());
+  const w = document.createElement("div"); w.className = `toast t-${kind}`; w.setAttribute("role","status");
+  w.innerHTML = `<span class="ti">${{ok:"✓",err:"!",warn:"!",info:"i"}[kind]||"i"}</span><span>${esc(msg)}</span>`;
+  document.body.appendChild(w); setTimeout(() => w.remove(), 3100);
+}
+
+/* ═══════════════ VIEW HELPERS ═══════════════ */
+const TH_MON = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+function thDate(s){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s||""); return m ? `${+m[3]} ${TH_MON[+m[2]-1]} ${m[1]}` : (s||""); }
+function seg(key, labels, cls=""){
+  let cur = S.tabs[key] ?? 0; if (cur >= labels.length) cur = 0;
+  return [cur, `<div class="seg ${cls}" role="tablist">${labels.map((l,i) => `<button role="tab" aria-selected="${i===cur}" data-act="tab" data-k="${key}" data-i="${i}" class="${i===cur?"act":""}">${l}</button>`).join("")}</div>`];
+}
+const emptyState = (icon, title, sub, btn, act) => `<div class="empty"><div class="e">${icon}</div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}</div>${btn?`<button class="btn pri" ${act}>${btn}</button>`:""}</div>`;
+const lockedNotice = c => c ? `<div class="notice">🔒<div>ทริปนี้ปิดแล้ว ดูย้อนหลังได้อย่างเดียว ถ้าต้องแก้ไข เปิดทริปอีกครั้งได้ที่ จัดการ → ทริป</div></div>` : "";
+const opt = (v, sel, label) => `<option value="${esc(v)}" ${v===sel?"selected":""}>${esc(label ?? v)}</option>`;
+const more = (key, summary, inner) => `<details class="more" data-key="${key}" ${UI.open.has(key)?"open":""}><summary>${summary}${ic("chev")}</summary><div class="in">${inner}</div></details>`;
+const catTile = cat => `<div class="cat-ico" style="background-color:color-mix(in srgb,${CAT_COLOR[cat]} 16%,transparent)">${CAT_ICON[cat]}</div>`;
+const moneyCls = v => v < -0.01 ? "var(--owe)" : v > 0.01 ? "var(--get)" : "var(--ink3)";
+function billRow(e, me){
+  const sl = splitList(e.split_members), sh = splitAmounts(e.amount, sl, e.split_detail, e.id), mine = sh[me], cat = catOf(e);
+  const tile = e.image_blob ? `<div class="cat-ico" style="background-image:url(${e.image_blob})"></div>` : catTile(cat);
+  return `<button class="it" data-act="sheet" data-s="edit" data-id="${e.id}">${tile}<div class="g"><div class="t1">${esc(e.description)}</div>
+    <div class="t2">${esc(e.payer_name)} จ่าย · หาร ${sl.length} คน${e.image_blob?" · มีสลิป":""}</div></div>
+    <div class="amt">${fmt(e.amount)}${mine!=null?`<small>ส่วนคุณ ${fmt(mine)}</small>`:""}</div></button>`;
+}
+
+/* ═══════════════ TOP + NAV ═══════════════ */
+function vTop(c){
+  return `<header class="top"><div class="wrap">
+    <button class="trip-sw" data-act="sheet" data-s="trips" aria-label="สลับทริป"><span class="logo">⛺</span><span class="t">
+      <span class="k">${c.trip ? (c.trip.trip_date ? thDate(c.trip.trip_date) : "ทริปของคุณ") : "Trip Splitter"}</span>
+      <span class="n"><span>${esc(c.trip ? c.trip.name : "เลือกทริป")}</span>${ic("chev")}</span></span></button>
+    <button class="icon-btn" data-act="menu" data-k="chat" aria-label="แจ้งเตือน">${ic("bell")}${c.unread?`<span class="dot">${c.unread}</span>`:""}</button>
+    <button class="me-btn" data-act="menu" data-k="account" aria-label="โปรไฟล์">${avatar(c.me,38,15)}</button>
+  </div></header>`;
+}
+function vNav(c){
+  const it = (k, icon, label) => `<button class="bn ${S.menu===k?"act":""}" data-act="menu" data-k="${k}">${ic(icon)}${label}${k==="chat"&&c.unread?`<span class="dot">${c.unread}</span>`:""}</button>`;
+  return `<nav class="bnav"><div class="bnav-in">${it("home","home","ทริป")}${it("bills","receipt","บิล")}
+    <div><button class="fab" data-act="addBill" aria-label="เพิ่มบิล" ${c.trip&&!c.closed?"":"disabled"}>${ic("plus")}</button></div>
+    ${it("chat","chat","แชท")}${it("manage","grid","จัดการ")}</div></nav>`;
+}
+
+/* ═══════════════ HOME ═══════════════ */
+function vHome(c){
+  if (!c.trip) return emptyState("🏕️","เริ่มทริปแรกกันเลย","สร้างทริป ชวนเพื่อนเข้ากลุ่ม แล้วบันทึกบิลได้ทันที","สร้างทริปใหม่",`data-act="goto" data-menu="manage" data-tk="manage" data-ti="0"`);
+  const {net, exps} = computeNet(c.tid, c.members), my = net[c.me] || 0, tot = sum(exps.map(e => e.amount));
+  const [lbl, cls] = my < -0.01 ? ["คุณต้องจ่าย","a-owe"] : my > 0.01 ? ["คุณจะได้คืน","a-get"] : ["คุณเคลียร์หมดแล้ว","a-even"];
+  const stack = c.members.slice(0,6).map(m => avatar(m,30,12)).join("") + (c.members.length>6?`<span class="more">+${c.members.length-6}</span>`:"");
+  let h = `<section class="pass ${c.closed?"closed":""}"><div class="pass-top"><h1 class="pass-name">${esc(c.trip.name)}</h1>
+    <div class="pass-meta">${c.trip.trip_date?`<span>📅 ${thDate(c.trip.trip_date)}</span>`:""}<span>👥 ${c.members.length} คน</span><span>🧾 ${exps.length} บิล</span>${c.trip.place_name?`<span>📍 ${esc(c.trip.place_name)}</span>`:""}</div>
+    ${c.members.length?`<div class="pass-stack">${stack}</div>`:""}</div><div class="pass-cut"></div>
+    <div class="pass-bot"><div><div class="pass-lbl">${lbl}</div><div class="pass-amt ${cls}">${fmt(Math.abs(my))}<small>บาท</small></div></div>
+    <div class="pass-side">ทั้งทริปใช้ไป<b>${fmt0(tot)} บาท</b></div></div></section>`;
+  const [t, bar] = seg("home2", ["ภาพรวม","โอนเงิน","สัมภาระ","แคมป์"]);
+  return h + bar + [vOverview, vSummary, vPacking, vCamp][t](c, net, exps);
+}
+function vOverview(c, net, exps){
+  let h = lockedNotice(c.closed);
+  if (!c.members.length) return h + emptyState("👥","ยังไม่มีเพื่อนในทริปนี้","เพิ่มเพื่อนเข้าทริปก่อน แล้วค่อยเริ่มบันทึกบิล","เพิ่มเพื่อน",`data-act="goto" data-menu="manage" data-tk="manage" data-ti="1"`);
+  h += `<div class="quick"><button data-act="addBill" ${c.closed?"disabled":""}><span class="qi">${ic("plus")}</span>เพิ่มบิล</button>
+    <button data-act="tab" data-k="home2" data-i="1"><span class="qi">${ic("wallet")}</span>โอนเงิน</button>
+    <a href="https://line.me/R/msg/text/?${encodeURIComponent(lineText(c, net, exps))}" target="_blank" rel="noopener"><span class="qi" style="background:color-mix(in srgb,#06C755 16%,transparent);color:#06C755">${ic("share")}</span>แชร์ LINE</a></div>`;
+  const mine = settlePlan(net).filter(([d,cr]) => d === c.me || cr === c.me);
+  if (mine.length){
+    h += `<h2>รายการของคุณ</h2><div class="list">` + mine.map(([d,cr,a]) => { const out = d === c.me, o = out ? cr : d;
+      return `<button class="it" data-act="tab" data-k="home2" data-i="1">${avatar(o,40,15)}<div class="g"><div class="t1">${out?`โอนให้ ${esc(o)}`:`${esc(o)} ต้องโอนให้คุณ`}</div><div class="t2">${out?"แตะเพื่อดู QR พร้อมเพย์":"แตะเพื่อดูหรือส่งข้อความทวง"}</div></div><div class="amt" style="color:${out?"var(--owe)":"var(--get)"}">${fmt(a)}</div></button>`; }).join("") + `</div>`;
+  }
+  if (!exps.length) return h + emptyState("🧾","ยังไม่มีบิล","กดปุ่ม + ด้านล่างเพื่อบันทึกบิลแรก ระบบจะคำนวณให้เองว่าใครต้องโอนให้ใคร");
+  const recent = [...exps].sort((a,b) => b.id-a.id).slice(0,4);
+  h += `<h2>บิลล่าสุด <small>${exps.length} บิล</small></h2><div class="list">${recent.map(e => billRow(e,c.me)).join("")}</div>`;
+  if (exps.length > 4) h += `<button class="btn ghost full" data-act="menu" data-k="bills">ดูบิลทั้งหมด</button>`;
+  const byCat = {}; exps.forEach(e => byCat[catOf(e)] = (byCat[catOf(e)]||0) + e.amount);
+  if (Object.keys(byCat).length > 1){
+    const top = Math.max(...Object.values(byCat));
+    h += `<h2>หมดไปกับอะไร</h2><div class="list">` + Object.entries(byCat).sort((a,b) => b[1]-a[1]).map(([n,v]) =>
+      `<div class="bar-row"><div class="bar-nm">${CAT_ICON[n]} ${esc(n)}</div><div class="bar-tr"><div class="bar-fl" style="width:${(v/top*100).toFixed(1)}%;background:${CAT_COLOR[n]}"></div></div><div class="bar-v">${fmt0(v)}</div></div>`).join("") + `</div>`;
+  }
+  return h;
+}
+function lineText(c, net, exps){
+  const plan = settlePlan(net);
+  let lm = `📊 สรุปบิล: ${c.trip.name}\n` + (c.trip.trip_date ? `📅 ${thDate(c.trip.trip_date)}\n` : "") + "========================\n";
+  exps.forEach((e,i) => { const sh = splitAmounts(e.amount, splitList(e.split_members), e.split_detail, e.id), vals = Object.values(sh);
+    lm += `${i+1}. ${e.description} | ${fmt(e.amount)} ฿ | ${e.payer_name}\n`;
+    if (new Set(vals.map(v => v.toFixed(2))).size > 1) Object.entries(sh).forEach(([n,v]) => lm += `   - ${n} ${fmt(v)} ฿\n`); else lm += `   คนละ ${fmt(vals[0]||0)} ฿\n`; });
+  lm += `รวม: ${fmt(sum(exps.map(e=>e.amount)))} ฿\n========================\n`;
+  plan.forEach(([dn,cn,am]) => { const u = userBy(cn)||{}; lm += `💳 ${dn} → ${cn} = ${fmt(am)} ฿\n`; if (u.promptpay) lm += `   📱 ${u.promptpay}\n`; if (u.bank_account) lm += `   🏦 ${u.bank_name||"บัญชี"}: ${u.bank_account}\n`; });
+  return lm + "========================";
+}
+function flowCard(dn, cn, at, me, size=46){
+  const side = n => `<div class="flow-side">${avatar(n,size,size*0.38)}<div class="flow-nm">${esc(n)}${n===me?" (คุณ)":""}</div></div>`;
+  return `<div class="flow">${side(dn)}<div class="flow-mid"><div class="flow-amt">${fmt(at)}</div><div class="flow-line"><span class="flow-dot"></span></div><div class="flow-cap">โอนให้</div></div>${side(cn)}</div>`;
+}
+function vSummary(c, net, exps){
+  if (!exps.length) return emptyState("💸","ยังไม่มีอะไรต้องโอน","เพิ่มบิลแรกแล้วแผนโอนเงินจะขึ้นที่นี่","เพิ่มบิล",`data-act="addBill"`);
+  const me = c.me, plan = settlePlan(net);
+  let h = `<h2 style="margin-top:4px">แผนโอนเงิน <small>${plan.length} รายการ</small></h2>`;
+  if (!plan.length) h += `<div class="clear"><div class="e">🎉</div><div class="t">เคลียร์ครบทุกคนแล้ว</div><div class="s">ไม่มีใครต้องโอนให้ใครอีก</div></div>`;
+  plan.forEach(([dn,cn,at], i) => {
+    const u = userBy(cn) || {}, pp = (u.promptpay||"").trim(), bn = (u.bank_name||"").trim(), ba = (u.bank_account||"").trim(), mine = me===dn || me===cn;
+    const qr = pp ? ppQrUri(pp, at, 6, "#0E332E") : null;
+    let info = "";
+    if (pp) info += `<div class="acct"><div class="g">พร้อมเพย์ ${esc(cn)}<b>${esc(pp)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(pp)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
+    if (ba) info += `<div class="acct"><div class="g">${esc(bn||"บัญชีธนาคาร")}<b>${esc(ba)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(ba)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
+    if (!pp && !ba) info += `<div class="notice" style="margin-bottom:8px">💳<div>${esc(cn)} ยังไม่ได้ใส่บัญชีรับเงิน บอกให้เพิ่มได้ที่หน้าโปรไฟล์</div></div>`;
+    if (mine){
+      info += `<label class="drop" style="margin:4px 0 8px;padding:8px 10px"><span class="ph" style="width:38px;height:38px" data-ph>${ic("image")}</span><span data-fn>แนบสลิปการโอน (ไม่บังคับ)</span><input type="file" id="paySlip_${i}" accept="image/*" data-change="slipPick"></label>
+        <div class="btns"><button class="btn pri" data-act="pay" data-i="${i}" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("check")} โอนแล้ว</button>
+        ${me===cn?`<button class="btn" style="flex:0 0 auto" data-act="nudge" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("bell")} ทวง</button>`:""}</div>`;
+    } else info += `<div class="hint">ให้ ${esc(dn)} หรือ ${esc(cn)} เป็นคนกดยืนยันเมื่อโอนแล้ว</div>`;
+    h += `<div class="tx ${mine?"me":""}">${flowCard(dn,cn,at,me)}<div class="tx-body ${qr?"":"noqr"}">${qr?`<div class="qr"><img src="${qr}" alt="QR พร้อมเพย์ ${esc(cn)} ${fmt(at)} บาท"><div>ยอด ${fmt(at)} ฿ ใส่ไว้แล้ว</div><button class="btn sm ghost" style="width:100%;margin-top:2px" data-act="dlQR" data-pp="${esc(pp)}" data-amt="${at}" data-cn="${esc(cn)}">${ic("dl")} บันทึกรูป</button></div>`:""}<div>${info}</div></div></div>`;
+  });
+  if (plan.some(p => (userBy(p[1])||{}).promptpay)) h += `<div class="hint">บันทึกรูป QR แล้วเปิดแอปธนาคาร → สแกน → เลือกรูปจากคลังภาพ ยอดเงินจะขึ้นมาเอง</div>`;
+  h += `<h2>ยอดสุทธิรายคน</h2><div class="net-grid">` + Object.entries(net).sort((a,b) => b[1]-a[1]).map(([m,b]) =>
+    `<div class="net ${m===me?"me":""}">${avatar(m,36,14)}<div class="g"><div class="nm">${esc(m)}${m===me?" (คุณ)":""}</div><div class="v" style="color:${moneyCls(b)}">${b>0.01?"+":b<-0.01?"−":""}${fmt(Math.abs(b))}</div><div class="s">${b>0.01?"ได้คืน":b<-0.01?"ต้องจ่าย":"เท่ากัน"}</div></div></div>`).join("") + `</div>`;
+  const paid = DB.settlements.filter(p => p.trip_id === c.tid).sort((a,b) => b.id-a.id);
+  if (paid.length) h += more("payhist", `🧾 ประวัติการโอน (${paid.length})`, `<div class="list">${paid.map(p => `<div class="it"><div class="g"><div class="t1">${esc(p.debtor)} → ${esc(p.creditor)}</div><div class="t2">${esc(p.timestamp)}</div></div><div class="amt" style="color:var(--get)">${fmt(p.amount)}</div>
+    ${p.slip_blob?`<button class="btn sm" data-act="zoom" data-t="settlements" data-id="${p.id}">สลิป</button>`:""}<button class="btn sm danger" data-act="unpay" data-id="${p.id}">ยกเลิก</button></div>`).join("")}</div>`);
+  const lm = lineText(c, net, exps);
+  h += more("line", "📲 ข้อความสรุปสำหรับแชร์", `<textarea readonly rows="9">${esc(lm)}</textarea><div class="btns" style="margin-top:10px"><button class="btn" data-act="copy" data-v="${esc(lm)}">${ic("copy")} คัดลอก</button><a class="btn line" target="_blank" rel="noopener" href="https://line.me/R/msg/text/?${encodeURIComponent(lm)}">เปิด LINE</a></div>`);
+  return h;
+}
+
+/* ═══════════════ BILLS PAGE + FORM ═══════════════ */
+function vBills(c){
+  if (!c.trip) return vHome(c);
+  const exps = DB.expenses.filter(e => e.trip_id === c.tid).sort((a,b) => b.id-a.id);
+  let h = `<h2 style="margin-top:6px">บิลทั้งหมด <small>${exps.length} บิล · ${fmt0(sum(exps.map(e=>e.amount)))} บาท</small></h2>` + lockedNotice(c.closed);
+  if (!exps.length) return h + emptyState("🧾","ยังไม่มีบิลในทริปนี้","กดปุ่ม + ด้านล่างเพื่อบันทึกบิลแรก แนบรูปสลิปไว้ด้วยก็ได้","เพิ่มบิล",`data-act="addBill" ${c.closed?"disabled":""}`);
+  const payers = ["ทุกคน", ...[...new Set(exps.map(e => e.payer_name))].sort()];
+  const cats = CAT_NAMES.filter(n => exps.some(e => catOf(e) === n));
+  if (!payers.includes(UI.payer)) UI.payer = "ทุกคน";
+  if (UI.cat !== "ทุกหมวด" && !cats.includes(UI.cat)) UI.cat = "ทุกหมวด";
+  h += `<div class="search">${ic("search")}<input type="text" id="billq" data-input="billq" placeholder="ค้นหาบิล" value="${esc(UI.q)}" autocomplete="off"></div>
+    <div class="chips scroll">${["ทุกหมวด",...cats].map(n => `<button class="chip ${UI.cat===n?"act":""}" data-act="billCat" data-v="${esc(n)}">${n==="ทุกหมวด"?"ทั้งหมด":`${CAT_ICON[n]} ${esc(n)}`}</button>`).join("")}
+    <select style="width:auto;min-height:38px;padding:4px 12px;border-radius:999px;font-size:14px;flex-shrink:0" data-change="billPayer" aria-label="คนจ่าย">${payers.map(p => opt(p,UI.payer,p==="ทุกคน"?"คนจ่าย: ทุกคน":`จ่ายโดย ${p}`)).join("")}</select></div>`;
+  const q = UI.q.trim().toLowerCase();
+  const rows = exps.filter(e => (!q || e.description.toLowerCase().includes(q)) && (UI.payer==="ทุกคน" || e.payer_name===UI.payer) && (UI.cat==="ทุกหมวด" || catOf(e)===UI.cat));
+  if (rows.length !== exps.length) h += `<div class="hint">พบ ${rows.length} บิล รวม ${fmt(sum(rows.map(r=>r.amount)))} บาท</div>`;
+  h += rows.length ? `<div class="list">${rows.map(e => billRow(e,c.me)).join("")}</div>` : emptyState("🔍","ไม่พบบิลที่ตรงกับเงื่อนไข","ลองลบคำค้นหรือเปลี่ยนหมวด");
+  return h;
+}
+function billForm(c, e){
+  const list = e ? (c.members.includes(e.payer_name) ? c.members : [...c.members, e.payer_name]) : c.members;
+  const payer = e ? e.payer_name : (c.members.includes(c.me) ? c.me : c.members[0]);
+  const split = e ? splitList(e.split_members) : list;
+  let mode = "equal", vals = {};
+  if (e && e.split_detail){ try { const d = JSON.parse(e.split_detail); mode = d.mode || "equal"; vals = d.values || {}; } catch(x){} }
+  const cat = e ? catOf(e) : "อาหาร", ro = c.closed ? "disabled" : "";
+  const vgrid = (m, def, step) => `<div class="sv" data-mode="${m}" ${mode===m?"":"hidden"}><div class="hint">${m==="amount"?"ใส่ยอดของคนที่รู้แน่นอน ที่เหลือระบบหารเท่ากันให้":"ใส่จำนวนส่วน เช่น 2 = จ่ายสองเท่าของคนที่ใส่ 1 · 0 = ไม่ร่วมจ่าย"}</div>
+    <div class="vgrid">${list.map((n,i) => `<div><label>${esc(n)}</label><input type="number" name="v_${m}_${i}" min="0" step="${step}" inputmode="decimal" value="${mode===m && n in vals ? vals[n] : def}"></div>`).join("")}</div></div>`;
+  return `<form data-form="saveBill" ${e?`data-id="${e.id}"`:""}>
+   <div class="sheet-h"><h3>${e ? (c.closed?"รายละเอียดบิล":"แก้ไขบิล") : "เพิ่มบิล"}</h3><button type="button" class="icon-btn" data-act="closeSheet" aria-label="ปิด">${ic("x")}</button></div>
+   <div class="sheet-b">
+    <div class="amt-wrap"><input type="number" name="amt" min="0" step="0.01" inputmode="decimal" placeholder="0" value="${e?e.amount:""}" ${ro} aria-label="จำนวนเงิน" ${e?"":"autofocus"}><span>บาท</span></div>
+    <div class="fld"><input type="text" name="desc" placeholder="ค่าอะไร เช่น ข้าวเย็น ค่าน้ำมัน" value="${esc(e?e.description:"")}" ${ro} aria-label="รายการ"></div>
+    <div class="fld"><span class="lbl">หมวดหมู่</span><div class="chips">${CAT_NAMES.map(n => `<label class="chip"><input type="radio" name="cat" value="${esc(n)}" ${n===cat?"checked":""} ${ro}>${CAT_ICON[n]} ${esc(n)}</label>`).join("")}</div></div>
+    <div class="fld"><span class="lbl">ใครจ่ายไปก่อน</span><div class="chips">${list.map(n => `<label class="chip p"><input type="radio" name="payer" value="${esc(n)}" ${n===payer?"checked":""} ${ro}>${avatar(n,28,11)} ${esc(n)}</label>`).join("")}</div></div>
+    <div class="fld"><span class="lbl" style="display:flex;justify-content:space-between">ใครร่วมหารบ้าง ${ro?"":`<button type="button" class="btn ghost sm" style="min-height:0;padding:0" data-act="splitAll">เลือกทุกคน</button>`}</span>
+      <div class="chips">${list.map(n => `<label class="chip p"><input type="checkbox" name="sp" value="${esc(n)}" ${split.includes(n)?"checked":""} ${ro}>${avatar(n,28,11)} ${esc(n)}<span class="tick">✓</span></label>`).join("")}</div></div>
+    <div class="fld"><span class="lbl">วิธีหาร</span><div class="seg sm">${[["equal","เท่ากัน"],["amount","ระบุยอดเอง"],["share","ตามสัดส่วน"]].map(([v,l]) => `<label><input type="radio" name="mode" value="${v}" ${v===mode?"checked":""} ${ro} data-change="splitMode">${l}</label>`).join("")}</div>
+      ${vgrid("amount",0,10)}${vgrid("share",1,1)}<div class="preview" id="preview"></div></div>
+    ${ro ? (e.image_blob?`<button type="button" class="drop" style="width:100%;background:none" data-act="zoom" data-t="expenses" data-id="${e.id}"><span class="ph" style="background-image:url(${e.image_blob})"></span>ดูรูปสลิป</button>`:"") :
+      `<div class="fld"><span class="lbl">รูปสลิป</span><label class="drop"><span class="ph" data-ph ${e&&e.image_blob?`style="background-image:url(${e.image_blob})"`:""}>${e&&e.image_blob?"":ic("image")}</span><span data-fn>${e&&e.image_blob?"แตะเพื่อเปลี่ยนรูป":"แตะเพื่อแนบรูป (ไม่บังคับ)"}</span><input type="file" name="slip" accept="image/*" data-change="slipPick"></label>
+      ${e&&e.image_blob?`<div class="btns" style="margin-top:8px"><button type="button" class="btn sm" data-act="zoom" data-t="expenses" data-id="${e.id}">ดูรูปเต็ม</button><label class="chk" style="flex:1"><input type="checkbox" name="delimg"> ลบรูปนี้</label></div>`:""}</div>`}
+   </div>
+   ${ro ? "" : `<div class="sheet-f"><div class="btns">${e?`<button type="button" class="btn danger" style="flex:0 0 auto" data-act="delBill" data-id="${e.id}">ลบ</button>`:""}<button class="btn pri" type="submit">${e?"บันทึกการแก้ไข":"บันทึกบิล"}</button></div></div>`}
+  </form>`;
+}
+function billFormList(f){
+  const c = ctx(), e = f.dataset.id ? DB.expenses.find(x => x.id === num(f.dataset.id)) : null;
+  return [c, e, e ? (c.members.includes(e.payer_name) ? c.members : [...c.members, e.payer_name]) : c.members];
+}
+function readSplit(f){
+  const [c, e, list] = billFormList(f), fd = new FormData(f), mode = fd.get("mode") || "equal", split = fd.getAll("sp");
+  let detail = null;
+  if (mode !== "equal"){ const values = {}; list.forEach((n,i) => { const v = Number(fd.get(`v_${mode}_${i}`))||0; if (split.includes(n) && (mode==="share" || v > 0)) values[n] = v; }); detail = JSON.stringify({mode, values}); }
+  return {c, e, list, fd, mode, split, detail, amt: r2(Number(fd.get("amt"))||0)};
+}
+function updatePreview(f){
+  const ai = f.querySelector(".amt-wrap input"); if (ai) ai.style.width = Math.max(1, (ai.value||ai.placeholder).length) * 0.62 + 0.4 + "em";
+  const p = f.querySelector("#preview"); if (!p) return;
+  const r = readSplit(f);
+  if (!(r.amt > 0) || !r.split.length){ p.innerHTML = `<span class="muted">ใส่ยอดเงินแล้วจะเห็นว่าแต่ละคนจ่ายเท่าไร</span>`; return; }
+  const sh = splitAmounts(r.amt, r.split, r.detail, r.e ? r.e.id : nextId("expenses"));
+  p.innerHTML = Object.entries(sh).map(([n,v]) => `<span>${esc(n)} <b>${fmt(v)}</b></span>`).join("");
+}
+
+/* ═══════════════ PACKING ═══════════════ */
+function vPacking(c){
+  const packs = DB.packing.filter(p => p.trip_id === c.tid).sort((a,b) => (a.done-b.done) || (a.id-b.id));
+  let h = lockedNotice(c.closed);
+  if (!c.closed) h += `<form class="panel" data-form="addPack"><div class="fld" style="margin-bottom:10px"><input type="text" name="item" placeholder="ของที่ต้องเอาไป เช่น เต็นท์ เตาแก๊ส ถ่าน" aria-label="ของที่ต้องเอาไป"></div>
+    <div style="display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px"><input type="text" name="qty" placeholder="จำนวน" aria-label="จำนวน"><select name="who" aria-label="ใครรับผิดชอบ"><option value="">ใครหิ้ว?</option>${c.members.map(m => opt(m,"")).join("")}</select><button class="btn pri" type="submit" aria-label="เพิ่ม">${ic("plus")}</button></div></form>`;
+  if (!packs.length) return h + emptyState("🎒","ยังไม่มีรายการของ","ใส่ของที่ต้องเอาไป แล้วแบ่งกันว่าใครหิ้วอะไร จะได้ไม่มีใครลืมเต็นท์");
+  const done = packs.filter(p => p.done).length;
+  h += `<div class="pk-prog"><div class="pk-bar"><div style="width:${(done/packs.length*100).toFixed(0)}%"></div></div><span class="num" style="font-weight:600">${done}/${packs.length}</span></div>
+    <div class="hint" style="margin-top:-6px">ของคุณค้างอยู่ ${packs.filter(p => p.assignee===c.me && !p.done).length} ชิ้น · ยังไม่มีคนรับ ${packs.filter(p => !p.assignee).length} ชิ้น</div>`;
+  const amtOf = Object.fromEntries(DB.expenses.filter(e => e.trip_id === c.tid).map(e => [e.id, e.amount]));
+  const dis = c.closed ? "disabled" : "";
+  h += `<div class="list">` + packs.map(p => {
+    const has = p.expense_id && amtOf[p.expense_id] != null, cur = has ? amtOf[p.expense_id] : 0;
+    return `<div class="pk-item ${p.done?"pk-done":""}"><div class="pk-top"><input type="checkbox" ${p.done?"checked":""} ${dis} data-change="packDone" data-id="${p.id}" aria-label="เตรียมแล้ว: ${esc(p.item)}">
+      <div style="flex:1;min-width:0"><span class="pk-name" style="font-weight:600">${esc(p.item)}</span>${p.qty?` <span class="muted">${esc(p.qty)}</span>`:""}
+      ${p.assignee?`<span class="pill" style="background:${personColor(p.assignee)}">${esc(p.assignee)}</span>`:`<span class="pill" style="background:var(--ink3)">ยังไม่มีคนรับ</span>`}${has?`<span class="pill" style="background:var(--pine);color:var(--on-pine)">${fmt(cur)} ฿</span>`:""}</div></div>
+      <div class="pk-ctl"><select ${dis} data-change="packWho" data-id="${p.id}" aria-label="ผู้รับผิดชอบ"><option value="">ยังไม่มีคนรับ</option>${c.members.map(m => opt(m,p.assignee)).join("")}</select>
+      <input type="number" min="0" step="0.01" inputmode="decimal" placeholder="ราคา" value="${cur?cur.toFixed(2):""}" ${dis} data-change="packPrice" data-id="${p.id}" aria-label="ราคา">
+      <button class="btn sm danger" ${dis} data-act="packDel" data-id="${p.id}" aria-label="ลบ">ลบ</button></div></div>`; }).join("") + `</div>`;
+  return h + `<div class="hint">ใส่ราคาแล้วกด Enter ระบบจะทำเป็นบิลหารกันทุกคนให้เอง ใส่ 0 เพื่อยกเลิกบิล</div>`;
+}
+
+/* ═══════════════ CAMP ═══════════════ */
+function vCamp(c){
+  const t = c.trip, has = t.lat != null && t.lon != null;
+  let h = "";
+  if (has){
+    const {lat, lon} = t;
+    const src = UI.mapMode === "g" ? `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`
+      : `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.02},${lat-0.012},${lon+0.02},${lat+0.012}&layer=mapnik&marker=${lat},${lon}`;
+    h += `<div class="panel" style="display:flex;align-items:center;gap:12px"><div style="font-size:28px">📍</div><div style="flex:1;min-width:0"><div style="font-family:var(--disp);font-weight:600;font-size:16px">${esc(t.place_name||"จุดกางเต็นท์")}</div><div class="muted num" style="font-size:13px">${lat.toFixed(5)}, ${lon.toFixed(5)}</div></div>
+      <a class="btn pri sm" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}">นำทาง</a></div>
+      <div class="seg sm"><label><input type="radio" name="mm" value="osm" ${UI.mapMode!=="g"?"checked":""} data-change="mapMode">แผนที่</label><label><input type="radio" name="mm" value="g" ${UI.mapMode==="g"?"checked":""} data-change="mapMode">Google Maps</label></div>
+      <iframe class="map" src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="แผนที่จุดกางเต็นท์"></iframe>
+      <h2>อากาศ 7 วัน</h2><div id="wx">${wxHtml(lat,lon)}</div>`;
+  } else h += emptyState("📍","ยังไม่ได้ปักหมุดจุดกางเต็นท์","ใส่พิกัดหรือวางลิงก์ Google Maps ด้านล่าง แล้วจะได้แผนที่และพยากรณ์อากาศของที่นั่น");
+  if (!c.closed) h += more("campedit", has ? "✏️ เปลี่ยนจุดกางเต็นท์" : "📍 ตั้งจุดกางเต็นท์", `<form class="panel" data-form="campLoc">
+    <div class="fld"><span class="lbl">ชื่อสถานที่</span><input type="text" name="pn" value="${esc(t.place_name||"")}" placeholder="ลานกางเต็นท์ผาหล่มสัก"></div>
+    <div class="fld"><span class="lbl">พิกัด หรือลิงก์ Google Maps</span><input type="text" name="co" value="${has?`${t.lat}, ${t.lon}`:""}" placeholder="18.7883, 98.9853"></div>
+    <div class="btns"><button class="btn pri" type="submit">บันทึกจุดกางเต็นท์</button>${has?`<button class="btn" style="flex:0 0 auto" type="button" data-act="clearCamp">ล้าง</button>`:""}</div></form>`);
+  if (has && !c.closed && !UI.open.has("campedit")) {}
+  h += `<h2>ก่อนออกเดินทาง</h2><div class="panel"><div style="font-size:14px;margin-bottom:10px">ที่แคมป์มักไม่มีสัญญาณ บันทึกสรุปยอด QR และรายการของเป็นรูปเก็บไว้ในเครื่องก่อน</div><button class="btn pri full" data-act="dlOffline">${ic("dl")} บันทึกสรุปทริปเป็นรูป</button></div>`;
+  return h;
+}
+function wxHtml(lat, lon){
+  const k = `${lat},${lon}`, w = WX[k];
+  if (!w || (w.t && Date.now()-w.t > 1800000 && !w.loading)) { setTimeout(() => loadWx(lat,lon)); return `<div class="panel muted">กำลังโหลดพยากรณ์อากาศ…</div>`; }
+  if (w.loading) return `<div class="panel muted">กำลังโหลดพยากรณ์อากาศ…</div>`;
+  if (w.err) return `<div class="notice bad">☁️<div style="flex:1">ดึงพยากรณ์อากาศไม่ได้: ${esc(w.err)}</div><button class="btn sm" data-act="wxRetry">ลองใหม่</button></div>`;
+  const d = w.data, wd = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+  return `<div class="list">` + d.time.map((day,i) => {
+    const code = d.weather_code[i], [ico,txt] = WMO[code] || ["🌡️","—"], rain = d.precipitation_probability_max[i] ?? 0;
+    const warn = rain >= 60 || [95,96,99,82,65].includes(code), dt = new Date(day+"T00:00:00");
+    return `<div class="wx ${warn?"warn":""}"><div class="wx-d">${i===0?"วันนี้":wd[dt.getDay()]}<div class="muted" style="font-size:11.5px;font-weight:500">${dt.getDate()}/${dt.getMonth()+1}</div></div><div class="wx-i">${ico}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:500">${txt}</div><div class="muted" style="font-size:12px">ฝน ${Math.round(rain)}% · ลม ${Math.round(d.wind_speed_10m_max[i])} กม./ชม. · ตก ${String(d.sunset[i]).slice(11,16)}</div></div>
+      <div class="wx-t">${Math.round(d.temperature_2m_max[i])}°<small>/${Math.round(d.temperature_2m_min[i])}°</small></div></div>`;
+  }).join("") + `</div><div class="hint">ข้อมูลจาก Open-Meteo · แถบสีเหลืองคือวันที่ฝนน่าจะตกหนัก</div>`;
+}
+
+/* ═══════════════ MANAGE ═══════════════ */
+function vManage(c){
+  const [t, bar] = seg("manage", ["ทริป","เพื่อน","ยอดรวม","ถังขยะ","สำรอง"], "sm");
+  let h = `<h2 style="margin-top:6px">จัดการ</h2>` + bar;
+  if (!c.me && t !== BACKUP_TAB) return h + emptyState("🔒","ต้องเข้าสู่ระบบก่อน","แท็บสำรองใช้ได้โดยไม่ต้องเข้าสู่ระบบ","เข้าสู่ระบบ",`data-act="menu" data-k="account"`);
+  return h + [vEvents, vMembers, vCross, vTrash, vBackup][t](c);
+}
+function vEvents(c){
+  let h = "";
+  if (c.trip){
+    const t = c.trip;
+    h += `<div class="panel"><form data-form="editEv"><div class="fld"><span class="lbl">ชื่อทริป</span><input type="text" name="name" maxlength="${NAME_MAXLEN}" value="${esc(t.name)}"></div>
+      <div class="fld"><span class="lbl">วันที่</span><input type="date" name="date" value="${esc(t.trip_date||todayStr())}"></div><button class="btn pri full" type="submit">บันทึก</button></form></div>`;
+    const left = c.closed ? 0 : Object.values(computeNet(c.tid,c.members).net).filter(v => Math.abs(v) > 0.01).length;
+    h += `<div class="list"><div class="it"><div class="g"><div class="t1">${c.closed?"🔒 ทริปปิดแล้ว":"ปิดทริป"}</div><div class="t2">${c.closed?`ปิดเมื่อ ${esc(t.closed_at||"-")}`:left?`ยังมี ${left} คนที่ยอดไม่เป็นศูนย์`:"ยอดเคลียร์ครบแล้ว พร้อมปิด"}</div></div>
+      <button class="btn sm" data-act="${c.closed?"reopenTrip":"closeTrip"}">${c.closed?"เปิดอีกครั้ง":"ปิดทริป"}</button></div>
+      <div class="it"><div class="g"><div class="t1">ลบทริป</div><div class="t2">${t.created_by===c.me?"ย้ายไปถังขยะ กู้คืนได้ภายหลัง":t.created_by?`ลบได้เฉพาะ ${esc(t.created_by)} ผู้สร้างทริป`:"ทริปนี้ยังไม่มีเจ้าของ"}</div></div>
+      ${t.created_by===c.me?`<button class="btn sm danger" data-act="trashTrip">ลบ</button>`:t.created_by?"":`<button class="btn sm" data-act="claimTrip">รับเป็นเจ้าของ</button>`}</div></div>`;
+  }
+  if (!c.trip) UI.open.add("newtrip");
+  h += more("newtrip", "➕ สร้างทริปใหม่", `<form class="panel" data-form="createEv">
+    <div class="fld"><span class="lbl">ชื่อทริป</span><input type="text" name="name" maxlength="${NAME_MAXLEN}" placeholder="เช่น ทริปเชียงใหม่"></div>
+    <div class="fld"><span class="lbl">วันที่</span><input type="date" name="date" value="${todayStr()}"></div>
+    ${c.trips.length?`<div class="fld"><span class="lbl">คัดลอกจากทริปเดิม</span><select name="src"><option value="">ไม่คัดลอก เริ่มใหม่</option>${c.trips.map(t => opt(String(t.id),"",t.name)).join("")}</select>
+    <label class="chk"><input type="checkbox" name="cpm" checked> คัดลอกรายชื่อเพื่อน</label><label class="chk"><input type="checkbox" name="cpp" checked> คัดลอกรายการของที่ต้องหิ้ว</label></div>`:""}
+    <button class="btn pri full" type="submit">สร้างทริป</button></form>`);
+  return h;
+}
+function vMembers(c){
+  if (!c.trip) return emptyState("🗓️","ยังไม่ได้เลือกทริป","สร้างหรือเลือกทริปก่อน","ไปที่ทริป",`data-act="tab" data-k="manage" data-i="0"`);
+  const avail = DB.all_users.map(u => u.name).filter(u => !c.members.includes(u));
+  let h = `<h2 style="margin-top:4px">ในทริปนี้ <small>${c.members.length} คน</small></h2>`;
+  h += c.members.length ? `<div class="list">${c.members.map(m => { const on = c.online.includes(m);
+    return `<div class="it">${avatar(m,40,15)}<div class="g"><div class="t1">${esc(m)}${m===c.me?" (คุณ)":""}</div><div class="t2">${on?"🟢 ออนไลน์":"ออฟไลน์"}</div></div>${c.closed?"":`<button class="btn sm" data-act="rmMember" data-n="${esc(m)}">นำออก</button>`}</div>`; }).join("")}</div>`
+    : `<div class="notice info">👥<div>ยังไม่มีใครในทริปนี้ เลือกเพื่อนด้านล่างได้เลย</div></div>`;
+  if (c.closed) return h + lockedNotice(true);
+  h += `<h2>เพิ่มเพื่อน</h2>`;
+  if (avail.length) h += `<div class="panel"><div class="chips" style="margin-bottom:12px">${avail.map(u => `<label class="chip p"><input type="checkbox" class="addm" value="${esc(u)}">${avatar(u,28,11)} ${esc(u)}<span class="tick">✓</span></label>`).join("")}</div>
+    <div class="btns"><button class="btn" style="flex:0 0 auto" data-act="selAllM">เลือกทุกคน</button><button class="btn pri" data-act="addMembers">เพิ่มเข้าทริป</button></div></div>`;
+  h += `<div class="hint">เพื่อนที่ยังไม่มีบัญชี ให้สร้างบัญชีในเครื่องนี้ก่อน (ออกจากระบบ → สร้างบัญชีใหม่) แล้วจะขึ้นมาให้เลือก</div>`;
+  return h;
+}
+function vCross(c){
+  const use = DB.trips.filter(t => (t.status===0||t.status===2) && !(UI.crossOpen && t.status===2)).sort((a,b) => a.id-b.id);
+  let h = `<label class="chk" style="margin-bottom:6px"><input type="checkbox" ${UI.crossOpen?"checked":""} data-change="crossOpen"> นับเฉพาะทริปที่ยังไม่ปิด</label>`;
+  const total = {}, per = [];
+  for (const t of use){ const mem = DB.members.filter(m => m.trip_id===t.id).map(m => m.name), r = computeNet(t.id, mem);
+    if (!r.exps.length && !r.paid.length) continue; per.push([t, r.net]); for (const k in r.net) total[k] = (total[k]||0) + r.net[k]; }
+  if (!Object.keys(total).length) return h + emptyState("🧮","ยังไม่มีบิลในทริปไหนเลย","พอเริ่มบันทึกบิล ยอดรวมข้ามทริปจะมาแสดงตรงนี้");
+  const mine = total[c.me]||0, cls = mine<-0.01?"a-owe":mine>0.01?"a-get":"a-even";
+  h += `<section class="pass"><div class="pass-top"><h1 class="pass-name">รวม ${per.length} ทริป</h1><div class="pass-meta"><span>หักกลบหนี้ทุกทริปแล้ว โอนครั้งเดียวจบ</span></div></div><div class="pass-cut"></div>
+    <div class="pass-bot"><div><div class="pass-lbl">${mine<-0.01?"คุณต้องจ่ายรวม":mine>0.01?"คุณจะได้คืนรวม":"เคลียร์หมดทุกทริป"}</div><div class="pass-amt ${cls}">${fmt(Math.abs(mine))}<small>บาท</small></div></div></div></section>`;
+  const plan = settlePlan(total);
+  h += plan.length ? plan.map(([d,cr,a]) => `<div class="tx ${c.me===d||c.me===cr?"me":""}">${flowCard(d,cr,a,c.me,40)}</div>`).join("") : `<div class="clear"><div class="e">🎉</div><div class="t">เคลียร์ครบทุกคนทุกทริป</div></div>`;
+  h += `<div class="hint">การกด “โอนแล้ว” ยังต้องทำในแต่ละทริป เพื่อให้ประวัติของทริปนั้นถูกต้อง</div>`;
+  h += more("crossper", `ดูแยกรายทริป (${per.length})`, `<div class="list">${per.map(([t,n]) => { const v = n[c.me]||0;
+    return `<div class="it"><div class="g"><div class="t1">${t.status===2?"🔒 ":""}${esc(t.name)}</div></div><div class="amt" style="color:${moneyCls(v)}">${v<-0.01?`−${fmt(-v)}`:v>0.01?`+${fmt(v)}`:"0.00"}</div></div>`; }).join("")}</div>`);
+  return h;
+}
+function vTrash(c){
+  const dels = DB.trips.filter(t => t.status === 1);
+  if (!dels.length) return emptyState("🗑️","ถังขยะว่าง","ทริปที่ลบจะพักไว้ที่นี่ก่อน กู้คืนได้ตลอด");
+  return `<div class="list">${dels.map(t => `<div class="it"><div class="g"><div class="t1">${esc(t.name)}</div><div class="t2">${t.created_by?`สร้างโดย ${esc(t.created_by)}`:"ไม่มีเจ้าของ กู้คืนแล้วรับเป็นเจ้าของก่อนจึงลบถาวรได้"}</div></div>
+    <button class="btn sm" data-act="restoreTrip" data-id="${t.id}">กู้คืน</button>${t.created_by===c.me?`<button class="btn sm danger" data-act="purgeTrip" data-id="${t.id}">ลบถาวร</button>`:""}</div>`).join("")}</div>`;
+}
+function vBackup(){
+  const LBL = {all_users:"ผู้ใช้",trips:"ทริป",members:"สมาชิกในทริป",expenses:"บิล",settlements:"การโอน",notifications:"ข้อความ",packing:"ของที่ต้องหิ้ว"};
+  let used = 0; try { used = (lsGet(KEY)||"").length*2; } catch(e){}
+  return `<div class="notice">💾<div><b>ข้อมูลอยู่ในเบราว์เซอร์เครื่องนี้เท่านั้น</b> ถ้าล้างข้อมูลเว็บไซต์ ข้อมูลจะหาย และเพื่อนที่เปิดไฟล์ในเครื่องตัวเองจะไม่เห็นข้อมูลชุดนี้ ส่งไฟล์สำรองให้กันเพื่อแชร์</div></div>
+    <h2>ดาวน์โหลดไฟล์สำรอง</h2><div class="list">${Object.keys(LBL).map(t => `<div class="it" style="padding:9px 14px"><div class="g" style="font-size:14px">${LBL[t]}</div><div class="amt" style="font-size:15px">${DB[t].length.toLocaleString()}</div></div>`).join("")}</div>
+    <div class="hint">รวมชื่อ รูปโปรไฟล์ พร้อมเพย์ เลขบัญชี และ PIN (แบบเข้ารหัส) · ใช้พื้นที่ ${(used/1048576).toFixed(2)} จาก ~5 MB</div>
+    <button class="btn pri full" data-act="exportBackup">${ic("dl")} ดาวน์โหลดไฟล์สำรอง</button>
+    <h2>กู้คืนจากไฟล์</h2><div class="panel"><label class="drop" style="margin-bottom:12px"><span class="ph" data-ph>📄</span><span data-fn>เลือกไฟล์ .json (ใช้ไฟล์จากเวอร์ชัน Streamlit ได้)</span><input type="file" id="restoreFile" accept=".json,application/json" data-change="slipPick"></label>
+    <div class="seg sm"><label><input type="radio" name="rmode" value="wipe" checked>แทนที่ทั้งหมด</label><label><input type="radio" name="rmode" value="merge">รวมกับของเดิม</label></div>
+    <label class="chk"><input type="checkbox" id="restoreOk"> ฉันเข้าใจว่าข้อมูลปัจจุบันอาจถูกเขียนทับ</label>
+    <button class="btn full" style="margin-top:10px" data-act="importBackup">กู้คืนข้อมูล</button></div>`;
+}
+
+/* ═══════════════ CHAT ═══════════════ */
+function vChat(c){
+  if (!c.trip) return emptyState("💬","ยังไม่ได้เลือกทริป","แชทแยกตามทริป เลือกทริปก่อนแล้วค่อยคุยกัน","เลือกทริป",`data-act="sheet" data-s="trips"`);
+  const me = c.me, rows = DB.notifications.filter(n => n.trip_id===c.tid && (n.to_user===me || n.from_user===me)).sort((a,b) => (a.timestamp<b.timestamp?-1:a.timestamp>b.timestamp?1:a.id-b.id));
+  const grps = {}, unrd = {};
+  rows.forEach(n => { const pt = (n.is_auto || n.from_user==="ระบบสรุปยอด") ? "🤖 ระบบ" : (n.to_user===me ? n.from_user : n.to_user);
+    (grps[pt] = grps[pt]||[]).push(n); unrd[pt] = (unrd[pt]||0) + (n.to_user===me && !n.is_read ? 1 : 0); });
+  const pt = S.chat_partner, others = c.members.filter(m => m !== me);
+  const sysAv = s => `<div class="av" style="width:${s}px;height:${s}px;background:var(--pine);font-size:${s*.45}px">🤖</div>`;
+  if (pt && (grps[pt] || others.includes(pt))){
+    if (unrd[pt]) { grps[pt].forEach(n => { if (n.to_user===me) n.is_read = 1; }); save(); }
+    const msgs = grps[pt] || [], on = c.online.includes(pt);
+    let h = `<div style="display:flex;align-items:center;gap:10px;margin:6px 0 12px"><button class="icon-btn" data-act="chatOpen" data-p="" aria-label="กลับ">${ic("back")}</button>${pt==="🤖 ระบบ"?sysAv(40):avatar(pt,40,15)}
+      <div style="flex:1;min-width:0"><div style="font-family:var(--disp);font-weight:600;font-size:17px">${esc(pt==="🤖 ระบบ"?"แจ้งเตือนจากระบบ":pt)}</div><div class="muted" style="font-size:12.5px">${pt==="🤖 ระบบ"?"แจ้งเตือนบิลและการโอน":on?"🟢 ออนไลน์":"ออฟไลน์"}</div></div></div>
+      <div class="thread" id="chatBody">${msgs.map(n => { const ts = String(n.timestamp||"").slice(11,16), mt = esc(n.message).replace(/\n/g,"<br>");
+        if (n.is_auto || n.from_user==="ระบบสรุปยอด") return `<div><div class="b-sys">${mt}</div><div class="b-time">${ts}</div></div>`;
+        if (n.from_user===me) return `<div style="display:flex;flex-direction:column;align-items:flex-end"><div class="b-out">${mt}</div><div class="b-time">${ts}</div></div>`;
+        return `<div style="display:flex;flex-direction:column;align-items:flex-start"><div class="b-in">${mt}</div><div class="b-time">${ts}</div></div>`; }).join("") || `<div class="muted" style="text-align:center;margin:auto">เริ่มคุยกับ ${esc(pt)} ได้เลย</div>`}</div>`;
+    if (pt !== "🤖 ระบบ") h += `<form data-form="reply" class="composer"><input type="text" id="replyBox" name="msg" placeholder="พิมพ์ข้อความ" autocomplete="off"><button class="btn" type="submit" name="like" value="1" aria-label="ถูกใจ">👍</button><button class="btn pri" type="submit" aria-label="ส่ง">${ic("send")}</button></form>`;
+    if (msgs.length) h += `<div style="margin-top:14px">${more("delmsg","ลบข้อความ",`<div class="list">${msgs.map(n => `<div class="it"><div class="g"><div class="t2" style="white-space:normal">${esc(n.from_user)}: ${esc(n.message.length>50?n.message.slice(0,50)+"…":n.message)}</div></div><button class="btn sm danger" data-act="delMsg" data-id="${n.id}">ลบ</button></div>`).join("")}</div>`)}</div>`;
+    return h;
+  }
+  let h = `<h2 style="margin-top:6px">แชท</h2>`;
+  const keys = Object.keys(grps).sort((a,b) => { const la = grps[a][grps[a].length-1], lb = grps[b][grps[b].length-1]; return la.timestamp < lb.timestamp ? 1 : -1; });
+  h += keys.length ? `<div class="list">${keys.map(p => { const last = grps[p][grps[p].length-1];
+    return `<button class="it" data-act="chatOpen" data-p="${esc(p)}">${p==="🤖 ระบบ"?sysAv(44):avatar(p,44,16)}<div class="g"><div class="t1">${esc(p==="🤖 ระบบ"?"แจ้งเตือนจากระบบ":p)}</div><div class="t2">${esc(last.message.split("\n")[0])}</div></div>
+      <div style="text-align:right"><div class="muted" style="font-size:11.5px">${esc(String(last.timestamp).slice(11,16))}</div>${unrd[p]?`<span class="dot" style="position:static;display:inline-grid;border:0">${unrd[p]}</span>`:""}</div></button>`; }).join("")}</div>`
+    : emptyState("💬","ยังไม่มีข้อความ","แจ้งเตือนบิลใหม่และการโอนจะเข้ามาที่นี่ หรือเริ่มคุยกับเพื่อนด้านล่าง");
+  if (others.length) h += `<h2>เริ่มคุยกับ</h2><div class="chips">${others.map(m => `<button class="chip p" data-act="chatOpen" data-p="${esc(m)}">${avatar(m,28,11)} ${esc(m)}</button>`).join("")}</div>`;
+  return h;
+}
+
+/* ═══════════════ ACCOUNT / LOGIN ═══════════════ */
+function vLogin(){
+  const users = DB.all_users, signup = UI.loginMode === "signup" || !users.length;
+  let h = `<div class="wrap"><div class="login"><div class="brand"><div class="logo">⛺</div><div><h1>Trip Splitter</h1><div class="tag">หารค่าทริปกับเพื่อน ไม่ต้องจดใส่กระดาษ</div></div></div>`;
+  if (!signup){
+    h += `<form data-form="login"><span class="lbl">คุณคือใคร</span><div class="who">${users.map((u,i) => `<label><input type="radio" name="name" value="${esc(u.name)}" ${i===0?"checked":""}>${avatar(u.name,48,18)}${esc(u.name)}</label>`).join("")}</div>
+      <div class="fld"><span class="lbl">PIN 4 หลัก</span><input class="pin" type="password" name="pin" maxlength="4" inputmode="numeric" autocomplete="current-password" placeholder="••••"></div>
+      <button class="btn pri full" type="submit">เข้าสู่ระบบ</button></form>
+      <button class="btn ghost full" style="margin-top:8px" data-act="loginMode" data-v="signup">สร้างบัญชีใหม่</button>`;
+  } else {
+    h += `<form data-form="signup" class="panel"><div class="fld"><span class="lbl">ชื่อเล่น</span><input type="text" name="name" maxlength="${NAME_MAXLEN}" placeholder="ชื่อที่เพื่อนเรียก" autocomplete="nickname"></div>
+      <div class="fld"><span class="lbl">ตั้ง PIN 4 หลัก</span><input class="pin" type="password" name="p1" maxlength="4" inputmode="numeric" autocomplete="new-password" placeholder="••••"></div>
+      <div class="fld"><span class="lbl">ยืนยัน PIN</span><input class="pin" type="password" name="p2" maxlength="4" inputmode="numeric" autocomplete="new-password" placeholder="••••"></div>
+      <button class="btn pri full" type="submit">สร้างบัญชี</button></form>
+      ${users.length?`<button class="btn ghost full" data-act="loginMode" data-v="login">มีบัญชีแล้ว เข้าสู่ระบบ</button>`:""}`;
+  }
+  return h + `<button class="btn ghost full" style="margin-top:4px;color:var(--ink3)" data-act="goto" data-menu="manage" data-tk="manage" data-ti="${BACKUP_TAB}">กู้คืนข้อมูลจากไฟล์สำรอง</button></div></div>`;
+}
+function vAccount(c){
+  const u = userBy(c.me);
+  let h = `<div class="panel" style="display:flex;align-items:center;gap:14px;margin-top:6px">${avatar(c.me,60,24)}<div style="flex:1;min-width:0"><div style="font-family:var(--disp);font-weight:700;font-size:20px">${esc(c.me)}</div><div class="muted" style="font-size:13px">${u.promptpay?`พร้อมเพย์ ${esc(u.promptpay)}`:"ยังไม่ได้ใส่บัญชีรับเงิน"}</div></div></div>`;
+  h += `<h2>บัญชีรับเงิน</h2><form class="panel" data-form="bank"><div class="fld"><span class="lbl">พร้อมเพย์</span><input type="text" name="pp" inputmode="numeric" value="${esc(u.promptpay||"")}" placeholder="เบอร์มือถือ หรือเลขบัตร 13 หลัก"></div>
+    <div class="two"><div class="fld"><span class="lbl">ธนาคาร</span><select name="bn">${BANK_LIST.map(b => opt(b, u.bank_name||BANK_LIST[0], b===BANK_LIST[0]?"ไม่ระบุ":b)).join("")}</select></div>
+    <div class="fld"><span class="lbl">เลขบัญชี</span><input type="text" name="ba" inputmode="numeric" value="${esc(u.bank_account||"")}"></div></div>
+    <button class="btn pri full" type="submit">บันทึกบัญชีรับเงิน</button><div class="hint">เพื่อนจะเห็น QR พร้อมเพย์พร้อมยอดเงินตอนต้องโอนให้คุณ</div></form>`;
+  h += more("prof", "👤 แก้ไขชื่อและรูปโปรไฟล์", `<form class="panel" data-form="profile"><div class="fld"><span class="lbl">ชื่อที่แสดง</span><input type="text" name="name" maxlength="${NAME_MAXLEN}" value="${esc(c.me)}"><div class="hint">เปลี่ยนแล้ว บิล แชท และยอดเงินเดิมจะตามไปด้วย</div></div>
+    <div class="fld"><label class="drop"><span class="ph" data-ph ${u.avatar_blob?`style="background-image:url(${u.avatar_blob});border-radius:50%"`:`style="border-radius:50%"`}>${u.avatar_blob?"":ic("image")}</span><span data-fn>แตะเพื่อเลือกรูปโปรไฟล์</span><input type="file" name="pic" accept="image/*" data-change="slipPick"></label></div>
+    ${u.avatar_blob?`<label class="chk"><input type="checkbox" name="delpic"> ลบรูปโปรไฟล์</label>`:""}<button class="btn pri full" type="submit">บันทึกโปรไฟล์</button></form>`);
+  h += more("pin", "🔑 เปลี่ยน PIN", `<form class="panel" data-form="chgPin">${u.pin_hash?`<div class="fld"><span class="lbl">PIN เดิม</span><input class="pin" type="password" name="op" maxlength="4" inputmode="numeric" placeholder="••••"></div>`:`<div class="hint">บัญชีนี้ยังไม่เคยตั้ง PIN</div>`}
+    <div class="two"><div class="fld"><span class="lbl">PIN ใหม่</span><input class="pin" type="password" name="p1" maxlength="4" inputmode="numeric" placeholder="••••"></div><div class="fld"><span class="lbl">ยืนยัน PIN ใหม่</span><input class="pin" type="password" name="p2" maxlength="4" inputmode="numeric" placeholder="••••"></div></div>
+    <button class="btn pri full" type="submit">เปลี่ยน PIN</button></form>`);
+  h += `<h2>คนในเครื่องนี้ <small>${DB.all_users.length} คน</small></h2><div class="list">${DB.all_users.map(x => { const on = c.online.includes(x.name);
+    return `<div class="it">${avatar(x.name,36,14,on?null:"var(--ink3)")}<div class="g"><div class="t1">${esc(x.name)}${x.name===c.me?" (คุณ)":""}</div><div class="t2">${on?"🟢 ออนไลน์":"ออฟไลน์"}</div></div></div>`; }).join("")}</div>`;
+  return h + `<button class="btn danger full" data-act="logout">ออกจากระบบ</button>`;
+}
+
+/* ═══════════════ SHEETS ═══════════════ */
+function vSheet(c){
+  const s = UI.sheet; if (!s) return "";
+  let inner = "";
+  if (s.type === "add" || s.type === "edit"){
+    const e = s.type === "edit" ? DB.expenses.find(x => x.id === s.id) : null;
+    if ((s.type === "edit" && !e) || !c.trip){ UI.sheet = null; return ""; }
+    inner = billForm(c, e);
+  } else if (s.type === "trips"){
+    inner = `<div class="sf"><div class="sheet-h"><h3>ทริปของคุณ</h3><button class="icon-btn" data-act="closeSheet" aria-label="ปิด">${ic("x")}</button></div><div class="sheet-b">
+      ${c.trips.length ? `<div class="list" style="box-shadow:none;background:var(--surface2)">${c.trips.map(t => { const n = DB.members.filter(m => m.trip_id===t.id).length;
+        return `<button class="it" data-act="selTrip" data-id="${t.id}"><div class="cat-ico" style="background:${t.id===c.tid?"var(--pine)":"var(--surface)"};color:${t.id===c.tid?"var(--on-pine)":"inherit"}">${t.status===2?"🔒":"⛺"}</div>
+          <div class="g"><div class="t1">${esc(t.name)}</div><div class="t2">${t.trip_date?thDate(t.trip_date)+" · ":""}${n} คน</div></div>${t.id===c.tid?`<span style="color:var(--pine)">${ic("check")}</span>`:""}</button>`; }).join("")}</div>`
+        : `<div class="muted" style="text-align:center;padding:20px">ยังไม่มีทริป</div>`}</div>
+      <div class="sheet-f"><button class="btn pri full" data-act="newTrip">${ic("plus")} สร้างทริปใหม่</button></div></div>`;
+  }
+  return `<div class="sheet-bg" data-act="closeSheet"></div><div class="sheet" role="dialog" aria-modal="true">${inner}</div>`;
+}
+
+/* ═══════════════ RENDER ═══════════════ */
+const app = document.getElementById("app");
+function render(){
+  const c = ctx();
+  let html;
+  if (!c.me && S.menu !== "manage"){ html = vLogin(); UI.sheet = null; }
+  else if (!c.me){ html = `<header class="top"><div class="wrap"><button class="icon-btn" data-act="menu" data-k="home" aria-label="กลับ">${ic("back")}</button><span style="font-family:var(--disp);font-weight:600;font-size:17px">กลับไปหน้าเข้าสู่ระบบ</span></div></header><main class="wrap">${vManage(c)}</main>`; }
+  else {
+    const body = ({home:vHome, bills:vBills, chat:vChat, manage:vManage, account:vAccount}[S.menu] || vHome)(c);
+    html = vTop(ctx()) + `<main class="wrap">${body}</main>` + vNav(ctx()) + vSheet(c);
+  }
+  const a = document.activeElement, fid = a && a.id; let s0, s1; try { s0 = a.selectionStart; s1 = a.selectionEnd; } catch(e){}
+  const y = window.scrollY, hadSheet = !!document.querySelector(".sheet");
+  app.innerHTML = html;
+  window.scrollTo(0, y);
+  document.body.classList.toggle("lock", !!UI.sheet);
+  if (fid){ const n = document.getElementById(fid); if (n){ n.focus(); try { n.setSelectionRange(s0, s1); } catch(e){} } }
+  const sh = document.querySelector(".sheet");
+  if (sh){
+    if (hadSheet) sh.style.animation = "none", document.querySelector(".sheet-bg").style.animation = "none";
+    const f = sh.querySelector("form[data-form=saveBill]"); if (f) updatePreview(f);
+    if (!hadSheet){ const af = sh.querySelector("[autofocus]"); if (af && matchMedia("(hover:hover)").matches) af.focus(); }
+  }
+  const cb = document.getElementById("chatBody"); if (cb) cb.scrollTop = cb.scrollHeight;
+}
+
+/* ═══════════════ ACTIONS ═══════════════ */
+const num = v => Number(v);
+const ACT = {
+  menu: el => { S.menu = el.dataset.k; UI.sheet = null; if (S.menu !== "chat") S.chat_partner = S.chat_partner; window.scrollTo(0,0); },
+  tab: el => { S.tabs[el.dataset.k] = num(el.dataset.i); UI.sheet = null; },
+  goto: el => { S.menu = el.dataset.menu; S.tabs[el.dataset.tk] = num(el.dataset.ti); UI.sheet = null; window.scrollTo(0,0); },
+  selTrip: el => { S.trip_id = num(el.dataset.id); UI.sheet = null; S.chat_partner = null; },
+  newTrip: () => { UI.sheet = null; S.menu = "manage"; S.tabs.manage = 0; UI.open.add("newtrip"); window.scrollTo(0,0); },
+  sheet: el => { UI.sheet = {type: el.dataset.s, id: el.dataset.id ? num(el.dataset.id) : null}; },
+  addBill: () => { const c = ctx(); if (!c.trip || c.closed) return "skip";
+    if (!c.members.length){ flash("เพิ่มเพื่อนเข้าทริปก่อน แล้วค่อยบันทึกบิล","info"); S.menu = "manage"; S.tabs.manage = 1; return; }
+    UI.sheet = {type:"add"}; },
+  closeSheet: () => { UI.sheet = null; },
+  chatOpen: el => { S.chat_partner = el.dataset.p || null; window.scrollTo(0,0); },
+  loginMode: el => { UI.loginMode = el.dataset.v; },
+  billCat: el => { UI.cat = el.dataset.v; },
+  splitAll: el => { const f = el.closest("form"); f.querySelectorAll("input[name=sp]").forEach(x => x.checked = true); updatePreview(f); return "skip"; },
+  selAllM: () => { const all = [...document.querySelectorAll(".addm")], on = !all.every(x => x.checked); all.forEach(x => x.checked = on); return "skip"; },
+  zoom: el => { const r = DB[el.dataset.t].find(x => x.id === num(el.dataset.id)); const src = r && (r.image_blob || r.slip_blob); if (!src) return "skip";
+    const lb = document.createElement("div"); lb.className = "lightbox"; lb.innerHTML = `<img src="${src}" alt="รูปสลิป">`; lb.onclick = () => lb.remove(); document.body.appendChild(lb); return "skip"; },
+  copy: el => { const v = el.dataset.v; const fb = () => { const t = document.createElement("textarea"); t.value = v; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); flash("คัดลอกแล้ว","info"); } catch(e){} t.remove(); };
+    if (navigator.clipboard) navigator.clipboard.writeText(v).then(() => flash("คัดลอกแล้ว","info"), fb); else fb(); return "skip"; },
+  delBill: el => { if (!confirm("ลบบิลนี้?")) return "skip"; const id = num(el.dataset.id); DB.expenses = DB.expenses.filter(e => e.id !== id); DB.packing.forEach(p => { if (p.expense_id === id) p.expense_id = null; }); UI.sheet = null; return ["ลบบิลแล้ว","warn"]; },
+  dlQR: el => { const p = ppPayload(el.dataset.pp, num(el.dataset.amt)); if (p) download(`promptpay_${el.dataset.cn}_${num(el.dataset.amt).toFixed(2)}.png`, qrCanvas(p,10,3).toDataURL("image/png")); return "skip"; },
+  pay: async el => {
+    const c = ctx(), {dn, cn} = el.dataset, at = num(el.dataset.amt), f = document.getElementById("paySlip_"+el.dataset.i);
+    let slip = null; try { slip = await readImage(f && f.files[0]); } catch(e){ flash(e.message,"err"); return "skip"; }
+    DB.settlements.push({id:nextId("settlements"), trip_id:c.tid, debtor:dn, creditor:cn, amount:r2(at), timestamp:nowStr(), slip_blob:slip});
+    notify(c.tid, c.me===dn ? cn : dn, `✅ บันทึกการโอนเงิน\n💳 ${dn} → ${cn}\n💰 ${fmt(at)} บาท` + (slip ? "\n📎 แนบสลิปไว้แล้ว" : ""));
+    return [`บันทึกว่า ${dn} โอนให้ ${cn} แล้ว`];
+  },
+  nudge: el => { const c = ctx(), {dn, cn} = el.dataset, at = num(el.dataset.amt), u = userBy(cn)||{};
+    let m = `🔔 แจ้งเตือนยอดค้าง\n💳 ${dn} → ${cn}\n💰 ${fmt(at)} บาท`; if (u.promptpay) m += `\n📱 พร้อมเพย์: ${u.promptpay}`; if (u.bank_account) m += `\n🏦 ${u.bank_name||"บัญชี"}: ${u.bank_account}`; m += "\n(ดู QR พร้อมยอดได้ที่ ทริป → โอนเงิน)";
+    notify(c.tid, dn, m, c.me, 0); return [`ส่งข้อความทวงถึง ${dn} แล้ว`]; },
+  unpay: el => { if (!confirm("ยกเลิกรายการโอนนี้?")) return "skip"; DB.settlements = DB.settlements.filter(s => s.id !== num(el.dataset.id)); return ["ยกเลิกรายการโอนแล้ว"]; },
+  packDel: el => { DB.packing = DB.packing.filter(p => p.id !== num(el.dataset.id)); return ["ลบรายการแล้ว","warn"]; },
+  clearCamp: () => { Object.assign(ctx().trip, {place_name:null, lat:null, lon:null}); return ["ล้างจุดกางเต็นท์แล้ว","warn"]; },
+  wxRetry: () => { Object.keys(WX).forEach(k => delete WX[k]); },
+  dlOffline: () => { offlineSheet(ctx()); return "skip"; },
+  closeTrip: () => { Object.assign(ctx().trip, {status:2, closed_at:nowStr()}); return ["ปิดทริปแล้ว ดูย้อนหลังได้อย่างเดียว"]; },
+  reopenTrip: () => { Object.assign(ctx().trip, {status:0, closed_at:null}); return ["เปิดทริปอีกครั้งแล้ว"]; },
+  trashTrip: () => { if (!confirm("ย้ายทริปนี้ไปถังขยะ?")) return "skip"; ctx().trip.status = 1; S.trip_id = null; return ["ย้ายไปถังขยะแล้ว"]; },
+  claimTrip: () => { const t = ctx().trip; if (!t.created_by) t.created_by = S.me; return ["คุณเป็นเจ้าของทริปนี้แล้ว"]; },
+  restoreTrip: el => { DB.trips.find(t => t.id === num(el.dataset.id)).status = 0; return ["กู้คืนทริปแล้ว"]; },
+  purgeTrip: el => { if (!confirm("ลบถาวร? กู้คืนไม่ได้อีก")) return "skip"; const id = num(el.dataset.id);
+    ["settlements","expenses","members","notifications","packing"].forEach(t => DB[t] = DB[t].filter(r => r.trip_id !== id)); DB.trips = DB.trips.filter(t => t.id !== id); return ["ลบถาวรแล้ว"]; },
+  rmMember: el => { if (!confirm(`นำ ${el.dataset.n} ออกจากทริป?`)) return "skip"; const n = el.dataset.n, c = ctx(); DB.members = DB.members.filter(m => !(m.trip_id===c.tid && m.name===n)); return [`นำ ${n} ออกแล้ว`]; },
+  addMembers: () => { const sel = [...document.querySelectorAll(".addm:checked")].map(x => x.value), c = ctx();
+    if (!sel.length) { flash("เลือกเพื่อนอย่างน้อย 1 คน","err"); return "skip"; }
+    sel.forEach(n => { if (!DB.members.some(m => m.trip_id===c.tid && m.name===n)) DB.members.push({id:nextId("members"), trip_id:c.tid, name:n}); });
+    return [`เพิ่ม ${sel.length} คนเข้าทริปแล้ว`]; },
+  delMsg: el => { DB.notifications = DB.notifications.filter(n => n.id !== num(el.dataset.id)); return []; },
+  logout: () => { setOffline(S.me); S.me = null; S.chat_partner = null; S.menu = "home"; },
+  exportBackup: () => { exportBackup(); flash("ดาวน์โหลดไฟล์สำรองแล้ว"); return "skip"; },
+  importBackup: async () => {
+    const f = document.getElementById("restoreFile").files[0], ok = document.getElementById("restoreOk").checked;
+    if (!f) { flash("เลือกไฟล์สำรองก่อน","err"); return "skip"; }
+    if (!ok) { flash("ติ๊กยืนยันก่อนกู้คืน","err"); return "skip"; }
+    const wipe = document.querySelector("input[name=rmode]:checked").value === "wipe";
+    const [res, msg] = importBackup(await f.text(), wipe);
+    flash(msg, res ? "ok" : "err"); return res ? "rendered" : "skip";
+  },
+};
+document.addEventListener("click", async e => {
+  const el = e.target.closest("[data-act]"); if (!el || el.disabled) return;
+  if (el.tagName === "A") return;
+  e.preventDefault();
+  const r = await ACT[el.dataset.act](el);
+  if (r === "skip") return;
+  if (Array.isArray(r)) { if (!save()) return; if (r[0]) flash(r[0], r[1]||"ok"); }
+  saveS(); render();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && UI.sheet){ UI.sheet = null; render(); } });
+
+const CHG = {
+  splitMode: el => { const f = el.form; f.querySelectorAll(".sv").forEach(d => d.hidden = d.dataset.mode !== el.value); updatePreview(f); return "skip"; },
+  slipPick: el => { const lab = el.closest(".drop"), file = el.files[0]; if (!lab || !file) return "skip";
+    const ph = lab.querySelector("[data-ph]"), fn = lab.querySelector("[data-fn]");
+    if (fn) fn.textContent = file.name; if (ph && file.type.startsWith("image/")){ ph.style.backgroundImage = `url(${URL.createObjectURL(file)})`; ph.innerHTML = ""; } return "skip"; },
+  billPayer: el => { UI.payer = el.value; },
+  mapMode: el => { UI.mapMode = el.value; }, crossOpen: el => { UI.crossOpen = el.checked; },
+  packDone: el => { DB.packing.find(p => p.id === num(el.dataset.id)).done = el.checked ? 1 : 0; save(); },
+  packWho: el => { DB.packing.find(p => p.id === num(el.dataset.id)).assignee = el.value || null; save(); },
+  packPrice: el => { const c = ctx(), p = DB.packing.find(x => x.id === num(el.dataset.id)); const cur = p.expense_id ? (DB.expenses.find(x => x.id===p.expense_id)||{}).amount||0 : 0;
+    if (Math.abs((Number(el.value)||0) - cur) < 0.005) return "skip";
+    const [ok, msg] = packSyncPrice(c, p, el.value); if (save() && msg) flash(msg, ok ? "ok" : "err"); },
+};
+document.addEventListener("change", e => { const el = e.target.closest("[data-change]");
+  if (!el){ const f = e.target.closest("form[data-form=saveBill]"); if (f) updatePreview(f); return; }
+  if (CHG[el.dataset.change](el) === "skip") return; saveS(); render(); });
+document.addEventListener("input", e => {
+  if (e.target.dataset.input === "billq") { UI.q = e.target.value; render(); return; }
+  const f = e.target.closest("form[data-form=saveBill]"); if (f) updatePreview(f);
+});
+document.addEventListener("toggle", e => { const d = e.target; if (d.tagName === "DETAILS" && d.dataset.key) { d.open ? UI.open.add(d.dataset.key) : UI.open.delete(d.dataset.key); } }, true);
+
+/* ═══════════════ FORMS ═══════════════ */
+const FORM = {
+  saveBill: async f => {
+    const {c, e, fd, split, detail, amt} = readSplit(f), desc = (fd.get("desc")||"").trim(), payer = fd.get("payer");
+    if (!(amt > 0)) return {err:"ใส่จำนวนเงินก่อน"};
+    if (!desc) return {err:"ใส่ชื่อรายการ เช่น ข้าวเย็น"};
+    if (!split.length) return {err:"เลือกคนร่วมหารอย่างน้อย 1 คน"};
+    if (!payer) return {err:"เลือกคนที่จ่ายไปก่อน"};
+    let img = e ? e.image_blob : null;
+    if (fd.get("delimg")) img = null;
+    else if (fd.get("slip") && fd.get("slip").size) { try { img = await readImage(fd.get("slip")); } catch(x){ return {err:x.message}; } }
+    const cat = fd.get("cat") || "อื่น ๆ";
+    if (e){ Object.assign(e, {description:desc, amount:amt, payer_name:payer, split_members:split.join(","), image_blob:img, split_detail:detail, category:cat}); return {ok:"บันทึกการแก้ไขแล้ว", close:true}; }
+    const id = nextId("expenses");
+    DB.expenses.push({id, trip_id:c.tid, description:desc, amount:amt, payer_name:payer, split_members:split.join(","), image_blob:img, split_detail:detail, category:cat});
+    const sh = splitAmounts(amt, split, detail, id);
+    split.forEach(m => { if (m !== payer) notify(c.tid, m, `📌 บิลใหม่: '${desc}'\n💰 ${fmt(amt)} บาท | จ่ายโดย: ${payer}\n💸 ส่วนคุณ: ${fmt(sh[m]||0)} บาท`); });
+    return {ok:`บันทึก “${desc}” ${fmt(amt)} บาทแล้ว`, close:true};
+  },
+  addPack: (f, fd) => { const c = ctx(), it = fd.get("item").trim(); if (!it) return {err:"ใส่ชื่อของก่อน"};
+    DB.packing.push({id:nextId("packing"), trip_id:c.tid, item:it, qty:fd.get("qty").trim(), assignee:fd.get("who")||null, done:0, note:null, added_by:c.me, expense_id:null, timestamp:nowStr()});
+    setTimeout(() => { const i = document.querySelector("form[data-form=addPack] [name=item]"); if (i) i.focus(); });
+    return {ok:`เพิ่ม “${it}” แล้ว`}; },
+  campLoc: (f, fd) => { const co = fd.get("co").trim(), [la, lo] = parseLatLon(co);
+    if (co && la === null) return {err:"อ่านพิกัดไม่ออก ใส่แบบ 18.7883, 98.9853 หรือวางลิงก์ Google Maps แบบเต็ม (ลิงก์ย่อ maps.app.goo.gl ให้เปิดก่อนแล้วคัดลอกจากแถบที่อยู่)"};
+    Object.assign(ctx().trip, {place_name:fd.get("pn").trim()||null, lat:la, lon:lo}); UI.open.delete("campedit"); return {ok:"บันทึกจุดกางเต็นท์แล้ว"}; },
+  createEv: (f, fd) => {
+    const name = fd.get("name").trim(), [ok, err] = validName(name); if (!ok) return {err};
+    if (DB.trips.some(t => t.name === name)) return {err:"มีทริปชื่อนี้แล้ว"};
+    const id = nextId("trips"), src = num(fd.get("src")) || null;
+    DB.trips.push({id, name, status:0, trip_date:fd.get("date")||todayStr(), created_by:S.me, place_name:null, lat:null, lon:null, closed_at:null});
+    let nm = 0, np = 0;
+    if (src){
+      if (fd.get("cpm")) DB.members.filter(m => m.trip_id === src).forEach(m => { DB.members.push({id:nextId("members"), trip_id:id, name:m.name}); nm++; });
+      if (fd.get("cpp")) DB.packing.filter(p => p.trip_id === src).forEach(p => { DB.packing.push({id:nextId("packing"), trip_id:id, item:p.item, qty:p.qty, assignee:p.assignee, done:0, note:null, added_by:S.me, expense_id:null, timestamp:nowStr()}); np++; });
+    }
+    if (!src || !nm) DB.members.push({id:nextId("members"), trip_id:id, name:S.me});
+    S.trip_id = id; UI.open.delete("newtrip"); S.menu = src && nm ? "home" : "manage"; S.tabs.manage = 1; S.tabs.home2 = 0;
+    return {ok:`สร้าง “${name}” แล้ว` + (src ? ` คัดลอกเพื่อน ${nm} คน ของ ${np} ชิ้น` : " ต่อไปเพิ่มเพื่อนเข้าทริป")};
+  },
+  editEv: (f, fd) => { const t = ctx().trip, name = fd.get("name").trim(), [ok, err] = validName(name); if (!ok) return {err};
+    if (DB.trips.some(x => x.name === name && x.id !== t.id)) return {err:"มีทริปชื่อนี้แล้ว"};
+    Object.assign(t, {name, trip_date:fd.get("date")}); return {ok:"บันทึกแล้ว"}; },
+  reply: (f, fd, sub) => { const c = ctx(), like = sub && sub.name === "like", msg = like ? "👍" : fd.get("msg").trim(); if (!msg) return null;
+    notify(c.tid, S.chat_partner, msg, c.me, 0); setTimeout(() => { const b = document.getElementById("replyBox"); if (b && !like) b.focus(); }); return {ok:""}; },
+  login: async (f, fd) => {
+    const name = fd.get("name"), pin = fd.get("pin"), u = userBy(name); if (!u) return {err:"เลือกชื่อของคุณก่อน"};
+    try {
+      if (!u.pin_hash){ if (!/^\d{4}$/.test(pin)) return {err:"บัญชีนี้ยังไม่มี PIN ตั้งใหม่ได้เลย (ตัวเลข 4 หลัก)"}; [u.pin_hash, u.pin_salt] = await hashPin(pin); }
+      else if (!(await checkPin(pin, u.pin_hash, u.pin_salt))) return {err:"PIN ไม่ถูกต้อง"};
+    } catch(e){ return {err:e.message}; }
+    S.me = name; S.menu = "home"; heartbeat(); return {ok:`สวัสดี ${name}`};
+  },
+  signup: async (f, fd) => {
+    const name = fd.get("name").trim(), p1 = fd.get("p1"), p2 = fd.get("p2"), [ok, err] = validName(name);
+    if (!ok) return {err}; if (!/^\d{4}$/.test(p1)) return {err:"PIN ต้องเป็นตัวเลข 4 หลัก"};
+    if (p1 !== p2) return {err:"PIN สองช่องไม่ตรงกัน"}; if (userBy(name)) return {err:"มีคนใช้ชื่อนี้แล้ว"};
+    let h, s; try { [h, s] = await hashPin(p1); } catch(e){ return {err:e.message}; }
+    DB.all_users.push({id:nextId("all_users"), name, promptpay:null, bank_name:null, bank_account:null, avatar_blob:null, pin_hash:h, pin_salt:s});
+    S.me = name; S.menu = "home"; UI.loginMode = "login"; heartbeat(); return {ok:`ยินดีต้อนรับ ${name}`};
+  },
+  profile: async (f, fd) => {
+    const u = userBy(S.me), nn = fd.get("name").trim();
+    let pic; try { pic = fd.get("pic") && fd.get("pic").size ? await readImage(fd.get("pic"), {max:400, q:0.78, square:true}) : undefined; } catch(e){ return {err:e.message}; }
+    if (nn !== S.me){ const [ok, err] = renameUser(S.me, nn); if (!ok) return {err}; if (S.chat_partner === S.me) S.chat_partner = nn; S.me = nn; heartbeat(); }
+    if (fd.get("delpic")) u.avatar_blob = null; else if (pic) u.avatar_blob = pic;
+    UI.open.delete("prof"); return {ok:"บันทึกโปรไฟล์แล้ว"};
+  },
+  bank: (f, fd) => { const u = userBy(S.me), pp = fd.get("pp").trim();
+    if (pp && !ppTarget(pp)[0]) return {err:"เบอร์พร้อมเพย์ไม่ถูกรูปแบบ ใช้เบอร์มือถือ 10 หลัก หรือเลขบัตร 13 หลัก"};
+    Object.assign(u, {promptpay:pp, bank_name:fd.get("bn")===BANK_LIST[0]?"":fd.get("bn"), bank_account:fd.get("ba").trim()}); return {ok:"บันทึกบัญชีรับเงินแล้ว"}; },
+  chgPin: async (f, fd) => {
+    const u = userBy(S.me), p1 = fd.get("p1"), p2 = fd.get("p2");
+    try {
+      if (u.pin_hash && !(await checkPin(fd.get("op")||"", u.pin_hash, u.pin_salt))) return {err:"PIN เดิมไม่ถูกต้อง"};
+      if (!/^\d{4}$/.test(p1)) return {err:"PIN ใหม่ต้องเป็นตัวเลข 4 หลัก"};
+      if (p1 !== p2) return {err:"PIN ใหม่สองช่องไม่ตรงกัน"};
+      if (u.pin_hash && await checkPin(p1, u.pin_hash, u.pin_salt)) return {err:"PIN ใหม่ซ้ำกับของเดิม"};
+      [u.pin_hash, u.pin_salt] = await hashPin(p1);
+    } catch(e){ return {err:e.message}; }
+    UI.open.delete("pin"); return {ok:"เปลี่ยน PIN แล้ว"};
+  },
+};
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("[data-form]"); if (!f) return; e.preventDefault();
+  const btns = f.querySelectorAll("button"); btns.forEach(b => b.disabled = true);
+  let r; try { r = await FORM[f.dataset.form](f, new FormData(f), e.submitter); } catch(x){ console.error(x); r = {err:"เกิดข้อผิดพลาด: "+x.message}; }
+  btns.forEach(b => b.disabled = false);
+  if (!r) return;
+  if (r.err){
+    let er = f.querySelector(".err.dyn");
+    if (!er){ er = document.createElement("div"); er.className = "err dyn"; er.setAttribute("role","alert"); const sb = f.querySelector("button[type=submit]");
+      const foot = f.querySelector(".sheet-f"); if (foot) foot.prepend(er); else (sb.closest(".btns") || sb).before(er); }
+    er.textContent = r.err; if (!f.querySelector(".sheet-f")) er.scrollIntoView({block:"center", behavior:"smooth"}); return;
+  }
+  if (r.close) UI.sheet = null;
+  if (save() && r.ok) flash(r.ok);
+  saveS(); render();
+});
+
+/* ═══════════════ BOOT ═══════════════ */
+window.addEventListener("storage", e => {
+  if (e.key === KEY){ try { DB = JSON.parse(e.newValue) || blank(); TABLES.forEach(t => DB[t] = DB[t]||[]); } catch(x){} }
+  if (e.key !== KEY && e.key !== OKEY) return;
+  if (UI.sheet) return;
+  const a = document.activeElement;
+  if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.type !== "checkbox" && a.type !== "radio") return;
+  if ([...document.querySelectorAll("input[type=file]")].some(x => x.files.length)) return;
+  render();
+});
+heartbeat(); setInterval(heartbeat, 20000);
+render();
+</script>
+</body>
+</html>
