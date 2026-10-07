@@ -137,6 +137,12 @@ button.it:hover{background:var(--surface2)}
 textarea{min-height:0;font-size:13.5px;line-height:1.55}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pine);background:var(--surface)}
 input::placeholder{color:var(--ink3)}
+/* iOS Safari: ช่องวันที่มีความกว้างขั้นต่ำของตัวเอง ทำให้ล้นกรอบ */
+input,select,textarea{min-width:0;max-width:100%}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;text-align:left;line-height:1.4}
+input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
+
 .search{position:relative;margin-bottom:10px}
 .search .ic{position:absolute;left:14px;top:14px;color:var(--ink3)}
 .search input{padding-left:42px;background:var(--surface);box-shadow:var(--sh1)}
