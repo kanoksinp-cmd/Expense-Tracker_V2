@@ -2902,7 +2902,7 @@ async function offlineSheet(c){
   const hr = () => { x.fillStyle = "#dbeafe"; x.fillRect(28,y,W-56,2); y += 16; };
   hr(); text("แผนโอนเงิน",28,y,F(23,600),"#000"); y += 36;
   if (!plan.length){ text("ไม่มีใครต้องโอนให้ใคร",36,y,F(18),"#6b7280"); y += 30; }
-  plan.forEach(([d,cr,a]) => { const hl = c.me===d||c.me===cr; text(`${d}  →  ${cr}`,36,y,F(18),hl?"#000":"#6b7280"); x.textAlign="right"; text(`${fmt(a)} บาท`,W-36,y,F(18,600),hl?"#dc2626":"#9ca3af"); x.textAlign="left"; y += 32; });
+  plan.forEach(([d,cr,a]) => { const hl = c.me===d||c.me===cr; text(`${d}  →  ${cr}`,36,y,F(18),hl?"#000":"#6b7280"); drawText(x, `${fmt(a)} บาท`, W-36, y+18, F(18,600), hl?"#dc2626":"#9ca3af", "right"); y += 32; });
   const mineRow = plan.find(([d,cr]) => d === c.me && (userBy(cr)||{}).promptpay);
   if (mineRow){
     const [, cr, a] = mineRow, p = ppPayload(userBy(cr).promptpay, a);
@@ -3092,7 +3092,10 @@ function vSummary(c, net, exps){
     let info = "";
     if (pp) info += `<div class="acct"><div class="g">พร้อมเพย์ ${esc(cn)}<b>${esc(pp)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(pp)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
     if (ba) info += `<div class="acct"><div class="g">${esc(bn||"บัญชีธนาคาร")}<b>${esc(ba)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(ba)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
-    if (!pp && !ba) info += `<div class="notice" style="margin-bottom:8px">💳<div>${esc(cn)} ยังไม่ได้ใส่บัญชีรับเงิน บอกให้เพิ่มได้ที่หน้าโปรไฟล์</div></div>`;
+    if (!pp) info += cn === me
+      ? `<div class="notice" style="margin-bottom:8px">💳<div style="flex:1">${ba?"ใส่พร้อมเพย์ด้วย":"คุณยังไม่ได้ใส่บัญชีรับเงิน"} แอปจะสร้างรูป QR พร้อมยอดเงินให้เพื่อนสแกนจ่ายได้ทันที</div><button class="btn sm pri" data-act="goPP">ใส่พร้อมเพย์</button></div>`
+      : `<div class="notice" style="margin-bottom:8px">💳<div>${esc(cn)} ยังไม่ได้ใส่พร้อมเพย์ จึงยังไม่มีรูป QR${ba?" (โอนเข้าบัญชีด้านบนได้)":""} บอก ${esc(cn)} ให้ใส่ที่หน้าโปรไฟล์</div></div>`;
+    if (!pp && ba) info += `<div class="btns" style="margin-bottom:8px"><button class="btn sm" data-act="shareQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("share")} แชร์รูปยอดโอน</button></div>`;
     if (mine){
       info += `<label class="drop" style="margin:4px 0 8px;padding:8px 10px"><span class="ph" style="width:38px;height:38px" data-ph>${ic("image")}</span><span data-fn>แนบสลิปการโอน (ไม่บังคับ)</span><input type="file" id="paySlip_${i}" accept="image/*" data-change="slipPick"></label>
         <div class="btns"><button class="btn pri" data-act="pay" data-i="${i}" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("check")} โอนแล้ว</button>
@@ -3100,8 +3103,9 @@ function vSummary(c, net, exps){
     } else info += `<div class="hint">ให้ ${esc(dn)} หรือ ${esc(cn)} เป็นคนกดยืนยันเมื่อโอนแล้ว</div>`;
     h += `<div class="tx ${mine?"me":""}">${flowCard(dn,cn,at,me)}<div class="tx-body ${qr?"":"noqr"}">${qr?`<div class="qr"><img src="${qr}" alt="QR พร้อมเพย์ ${esc(cn)} ${fmt(at)} บาท"><div>ยอด ${fmt(at)} ฿ ใส่ไว้แล้ว</div><div class="qr-btns"><button class="btn sm pri" data-act="shareQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("share")} แชร์</button><button class="btn sm" data-act="dlQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}" aria-label="บันทึกรูป">${ic("dl")}</button></div></div>`:""}<div>${info}</div></div></div>`;
   });
-  if (plan.some(p => (userBy(p[1])||{}).promptpay)) h += `<button class="btn line full" style="margin:2px 0 8px" data-act="shareLine">${ic("share")} ส่งสรุปพร้อมรูป QR เข้า LINE</button>
-    <div class="hint">รูป QR บอกยอดโอนไว้แล้ว เพื่อนบันทึกรูปแล้วเปิดแอปธนาคาร → สแกน → เลือกรูปจากคลังภาพ ยอดเงินขึ้นให้เอง</div>`;
+  if (plan.length){ const anyPP = plan.some(p => (userBy(p[1])||{}).promptpay);
+    h += `<button class="btn line full" style="margin:2px 0 8px" data-act="shareLine">${ic("share")} ${anyPP?"ส่งสรุปพร้อมรูป QR เข้า LINE":"ส่งสรุปเข้า LINE"}</button>
+    <div class="hint">${anyPP?"รูป QR บอกยอดโอนไว้แล้ว เพื่อนบันทึกรูปแล้วเปิดแอปธนาคาร → สแกน → เลือกรูปจากคลังภาพ ยอดเงินขึ้นให้เอง":"ยังไม่มีรูป QR เพราะคนรับเงินยังไม่ได้ใส่พร้อมเพย์ ใส่แล้วปุ่มนี้จะแนบรูป QR ไปให้ด้วย"}</div>`; }
   h += `<h2>ยอดสุทธิรายคน</h2><div class="net-grid">` + Object.entries(net).sort((a,b) => b[1]-a[1]).map(([m,b]) =>
     `<div class="net ${m===me?"me":""}">${avatar(m,36,14)}<div class="g"><div class="nm">${esc(m)}${m===me?" (คุณ)":""}</div><div class="v" style="color:${moneyCls(b)}">${b>0.01?"+":b<-0.01?"−":""}${fmt(Math.abs(b))}</div><div class="s">${b>0.01?"ได้คืน":b<-0.01?"ต้องจ่าย":"เท่ากัน"}</div></div></div>`).join("") + `</div>`;
   const paid = DB.settlements.filter(p => p.trip_id === c.tid).sort((a,b) => b.id-a.id);
@@ -3453,6 +3457,7 @@ const ACT = {
   selAllM: () => { const all = [...document.querySelectorAll(".addm")], on = !all.every(x => x.checked); all.forEach(x => x.checked = on); return "skip"; },
   zoom: el => { const r = DB[el.dataset.t].find(x => x.id === num(el.dataset.id)); const src = r && (r.image_blob || r.slip_blob); if (!src) return "skip";
     const lb = document.createElement("div"); lb.className = "lightbox"; lb.innerHTML = `<img src="${src}" alt="รูปสลิป">`; lb.onclick = () => lb.remove(); document.body.appendChild(lb); return "skip"; },
+  goPP: () => { S.menu = "account"; window.scrollTo(0,0); setTimeout(() => { const i = document.querySelector("[name=pp]"); if (i){ i.scrollIntoView({block:"center"}); i.focus(); } }, 60); },
   copy: el => { const v = el.dataset.v; const fb = () => { const t = document.createElement("textarea"); t.value = v; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); flash("คัดลอกแล้ว","info"); } catch(e){} t.remove(); };
     if (navigator.clipboard) navigator.clipboard.writeText(v).then(() => flash("คัดลอกแล้ว","info"), fb); else fb(); return "skip"; },
   delBill: el => { if (!confirm("ลบบิลนี้?")) return "skip"; const id = num(el.dataset.id); DB.expenses = DB.expenses.filter(e => e.id !== id); DB.packing.forEach(p => { if (p.expense_id === id) p.expense_id = null; }); UI.sheet = null; return ["ลบบิลแล้ว","warn"]; },
@@ -3647,37 +3652,69 @@ const QRCARD = new Map();     // key -> File (สร้างล่วงหน�
 const cardKey = (tripName, dn, cn, at, pp) => [tripName, dn, cn, Number(at).toFixed(2), pp].join("|");
 const fmtPP = p => { const d = String(p||"").replace(/\D/g,""); return d.length===10 ? `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}` : d.length===13 ? `${d[0]}-${d.slice(1,5)}-${d.slice(5,10)}-${d.slice(10,12)}-${d[12]}` : p; };
 function rrect(x, X, Y, w, h, r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
+
+/* วาดข้อความแบบไม่พึ่ง measureText/textAlign ของเบราว์เซอร์
+   (Safari บน iPhone คำนวณความกว้างอักษรไทยบน canvas ผิด ทำให้ข้อความที่จัดกึ่งกลางเลื่อนออกนอกกรอบ)
+   วิธีนี้วาดลงผ้าใบชั่วคราว หาขอบจริงจากพิกเซล แล้วค่อยนำไปวาง */
+function textBmp(s, font, color){
+  const fs = parseInt((font.match(/(\d+)px/)||[0,24])[1], 10), pad = Math.ceil(fs*0.8);
+  const c = document.createElement("canvas"); c.width = Math.min(4000, Math.ceil(fs * Math.max(1, s.length) * 1.15) + pad*2); c.height = Math.ceil(fs*2.2);
+  const x = c.getContext("2d"); x.font = font; x.fillStyle = color; x.textBaseline = "alphabetic"; x.textAlign = "left";
+  const base = Math.round(fs*1.5); x.fillText(s, pad, base);
+  const d = x.getImageData(0, 0, c.width, c.height).data, W = c.width, H = c.height;
+  let minX = -1, maxX = -1;
+  for (let X = 0; X < W && minX < 0; X++) for (let Y = 0; Y < H; Y++) if (d[(Y*W+X)*4+3] > 10){ minX = X; break; }
+  for (let X = W-1; X >= 0 && maxX < 0; X--) for (let Y = 0; Y < H; Y++) if (d[(Y*W+X)*4+3] > 10){ maxX = X; break; }
+  return minX < 0 ? {c, x0:0, w:0, base} : {c, x0:minX, w:maxX-minX+1, base};
+}
+function drawText(ctx, s, ax, y, font, color, align="center", maxW=0){
+  let b = textBmp(s, font, color);
+  if (maxW && b.w > maxW){ const fs = parseInt(font.match(/(\d+)px/)[1], 10); font = font.replace(/\d+px/, Math.max(10, Math.floor(fs * maxW / b.w)) + "px"); b = textBmp(s, font, color); }
+  const left = align === "center" ? ax - b.w/2 : align === "right" ? ax - b.w : ax;
+  ctx.drawImage(b.c, b.x0, 0, b.w || 1, b.c.height, Math.round(left), Math.round(y - b.base), b.w || 1, b.c.height);
+  return b.w;
+}
 let FONTS_READY = null;
 function cardFonts(){ if (!FONTS_READY) FONTS_READY = Promise.all(['700 70px "Bai Jamjuree"','600 34px "Bai Jamjuree"','500 26px "Anuphan"','400 22px "Anuphan"'].map(f => document.fonts ? document.fonts.load(f).catch(()=>{}) : null)); return FONTS_READY; }
 async function makeQrCard(tripName, dn, cn, at){
-  const u = userBy(cn) || {}, pp = (u.promptpay||"").trim(), payload = ppPayload(pp, at); if (!payload) return null;
+  const u = userBy(cn) || {}, pp = (u.promptpay||"").trim(), payload = ppPayload(pp, at), bankAcc = (u.bank_account||"").trim();
+  if (!payload && !bankAcc) return null;      // ไม่มีทั้งพร้อมเพย์และบัญชี = ไม่มีข้อมูลให้โอน
   const k = cardKey(tripName, dn, cn, at, pp); if (QRCARD.has(k)) return QRCARD.get(k);
   await cardFonts();
-  const W = 720, bank = (u.bank_account||"").trim(), H = bank ? 1130 : 1080;
+  const W = 720, bank = bankAcc, H = payload ? (bank ? 1130 : 1080) : 780;
   const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
   const D = (w,s) => `${w} ${s}px "Bai Jamjuree","Anuphan",Tahoma,sans-serif`, F = (w,s) => `${w} ${s}px "Anuphan","Bai Jamjuree",Tahoma,sans-serif`;
-  const t = (s, X, Y, f, col, al="center") => { x.font = f; x.fillStyle = col; x.textAlign = al; x.fillText(s, X, Y); };
-  const fit = (s, f, max) => { x.font = f; if (x.measureText(s).width <= max) return s; while (s.length > 1 && x.measureText(s+"…").width > max) s = s.slice(0,-1); return s+"…"; };
+  const t = (s, X, Y, f, col, al="center", maxW=W-130) => drawText(x, s, X, Y, f, col, al, maxW);
   x.fillStyle = "#EAF0EE"; x.fillRect(0,0,W,H);
   rrect(x, 28, 28, W-56, H-56, 36); x.fillStyle = "#fff"; x.fill();
   // ส่วนหัวสีเข้ม แบบบัตรขึ้นเครื่องเหมือนในแอป
   x.save(); rrect(x, 28, 28, W-56, H-56, 36); x.clip(); x.fillStyle = "#123F39"; x.fillRect(28, 28, W-56, 300);
   x.strokeStyle = "rgba(255,255,255,.08)"; x.lineWidth = 2; for (let i=1;i<7;i++){ x.beginPath(); x.ellipse(600, 70, 46*i, 27*i, -0.2, 0, Math.PI*2); x.stroke(); } x.restore();
   x.textBaseline = "alphabetic";
-  t(fit(tripName || "ทริป", F(500,26), W-140), W/2, 92, F(500,26), "rgba(255,255,255,.72)");
-  t(fit(`${dn}  โอนให้  ${cn}`, D(600,34), W-120), W/2, 146, D(600,34), "#fff");
-  x.font = D(700,78); const amt = fmt(at), aw = x.measureText(amt).width; x.font = D(500,30); const bw = x.measureText(" บาท").width;
-  t(amt, W/2 - bw/2, 252, D(700,78), "#7EF0C0"); t("บาท", W/2 + aw/2 - bw/2 + 10, 252, D(500,30), "rgba(255,255,255,.75)", "left");
+  t(tripName || "ทริป", W/2, 92, F(500,26), "rgba(255,255,255,.72)");
+  t(`${dn}  โอนให้  ${cn}`, W/2, 146, D(600,34), "#fff");
+  const amt = fmt(at), ab = textBmp(amt, D(700,78), "#7EF0C0"), bb = textBmp("บาท", D(500,30), "rgba(255,255,255,.75)"), gap = 14, tot = ab.w + gap + bb.w, ax0 = Math.round(W/2 - tot/2);
+  x.drawImage(ab.c, ab.x0, 0, ab.w, ab.c.height, ax0, 252 - ab.base, ab.w, ab.c.height);
+  x.drawImage(bb.c, bb.x0, 0, bb.w, bb.c.height, ax0 + ab.w + gap, 252 - bb.base, bb.w, bb.c.height);
   // รอยปรุ
   x.setLineDash([12,10]); x.strokeStyle = "#D9E4E0"; x.lineWidth = 3; x.beginPath(); x.moveTo(64, 328); x.lineTo(W-64, 328); x.stroke(); x.setLineDash([]);
   x.fillStyle = "#EAF0EE"; [28, W-28].forEach(cx => { x.beginPath(); x.arc(cx, 328, 22, 0, Math.PI*2); x.fill(); });
   // QR
+  if (!payload){
+    // ไม่มีพร้อมเพย์: แสดงเลขบัญชีตัวใหญ่แทน QR
+    t("โอนเข้าบัญชี", W/2, 400, D(600,26), "#0F6E62");
+    t(u.bank_name || "บัญชีธนาคาร", W/2, 460, F(500,30), "#4A5C57");
+    rrect(x, 80, 490, W-160, 100, 20); x.fillStyle = "#F3F7F5"; x.fill();
+    t(bank, W/2, 558, D(700,48), "#13221F");
+    t(`ผู้รับเงิน ${cn}`, W/2, 636, F(500,24), "#7B8C87");
+  } else {
   t("สแกนจ่ายผ่านพร้อมเพย์", W/2, 378, D(600,26), "#0F6E62");
-  const q = qrCanvas(payload, 12, 2, "#0E332E"), qs = 420; x.imageSmoothingEnabled = false; x.drawImage(q, (W-qs)/2, 396, qs, qs);
+  const q = qrCanvas(payload, 12, 2, "#0E332E"), qs = 420; x.imageSmoothingEnabled = false; x.drawImage(q, (W-qs)/2, 396, qs, qs); x.imageSmoothingEnabled = true;
   let y = 396 + qs + 52;
   t(`พร้อมเพย์ ${fmtPP(pp)}`, W/2, y, D(600,32), "#13221F"); y += 44;
-  if (bank){ t(fit(`${u.bank_name || "บัญชีธนาคาร"} ${bank}`, F(500,25), W-140), W/2, y, F(500,25), "#4A5C57"); y += 50; }
+  if (bank){ t(`${u.bank_name || "บัญชีธนาคาร"} ${bank}`, W/2, y, F(500,25), "#4A5C57"); y += 50; }
   t("สแกนด้วยแอปธนาคาร ยอดเงินขึ้นให้เอง ไม่ต้องพิมพ์", W/2, y + 12, F(400,23), "#7B8C87");
+  }
   t("Trip Splitter", W/2, H - 58, D(600,20), "#B5C4BF");
   const blob = await new Promise(r => c.toBlob(r, "image/png"));
   const file = new File([blob], `QR_${dn}_โอนให้_${cn}_${amt.replace(/,/g,"")}บาท.png`, {type:"image/png"});
@@ -3690,7 +3727,7 @@ function warmQrCards(c){
 }
 function cachedCards(c){
   const plan = settlePlan(computeNet(c.tid, c.members).net), out = [];
-  for (const [dn, cn, at] of plan){ const pp = ((userBy(cn)||{}).promptpay||"").trim(); const f = pp && QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp)); if (f) out.push(f); }
+  for (const [dn, cn, at] of plan){ const pp = ((userBy(cn)||{}).promptpay||"").trim(); const f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp)); if (f) out.push(f); }
   return out;
 }
 function canShareFiles(files){ try { return !!(navigator.canShare && navigator.share && navigator.canShare({files})); } catch(e){ return false; } }
@@ -3701,7 +3738,8 @@ Object.assign(ACT, {
   shareQR: el => {
     const c = ctx(), {dn, cn} = el.dataset, at = num(el.dataset.amt), pp = ((userBy(cn)||{}).promptpay||"").trim();
     const f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp));
-    const text = `${dn} โอนให้ ${cn} ${fmt(at)} บาท (${c.trip.name})\nพร้อมเพย์ ${pp} — สแกน QR ในรูป ยอดเงินขึ้นให้เอง`;
+    const u = userBy(cn) || {};
+    const text = `${dn} โอนให้ ${cn} ${fmt(at)} บาท (${c.trip.name})\n` + (pp ? `พร้อมเพย์ ${pp} — สแกน QR ในรูป ยอดเงินขึ้นให้เอง` : `${u.bank_name||"บัญชี"} ${u.bank_account||""}`);
     if (!f){ makeQrCard(c.trip.name, dn, cn, at).then(x => { if (x){ dlFile(x); flash("บันทึกรูป QR แล้ว"); } }); return "skip"; }
     if (canShareFiles([f])){ copyQuiet(text); navigator.share({files:[f], text}).catch(e => { if (e.name !== "AbortError"){ dlFile(f); flash("บันทึกรูป QR แล้ว"); } }); }
     else { dlFile(f); flash("บันทึกรูป QR แล้ว — ส่งรูปนี้เข้า LINE ได้เลย"); }
@@ -3721,6 +3759,8 @@ Object.assign(ACT, {
         .catch(e => { if (e.name !== "AbortError") window.open(lineUrl, "_blank"); });
     } else {
       window.open(lineUrl, "_blank");
+      if (!files.length){ const plan = settlePlan(net), miss = [...new Set(plan.map(p => p[1]).filter(n => !((userBy(n)||{}).promptpay)))];
+        if (miss.length) setTimeout(() => flash(`ส่งได้แค่ข้อความ เพราะ ${miss.join(", ")} ยังไม่ได้ใส่พร้อมเพย์`,"warn"), 300); }
       if (files.length){ files.forEach(dlFile); flash(`บันทึกรูป QR ${files.length} รูปแล้ว แนบในแชท LINE ได้เลย`,"info"); }
     }
     return "skip";
