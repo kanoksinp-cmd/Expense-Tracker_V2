@@ -216,6 +216,7 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
 .qr{background:#fff;border-radius:14px;padding:8px;width:150px;text-align:center;box-shadow:inset 0 0 0 1px var(--line)}
 .qr img{width:100%;display:block;image-rendering:pixelated}
 .qr div{font-size:11px;color:#4A5C57;line-height:1.4;margin-top:4px}
+.qr .qr-btns{display:flex;gap:6px;margin-top:6px}.qr .qr-btns .btn{flex:1;padding:4px 8px}.qr .qr-btns .btn:last-child{flex:0 0 40px}
 .acct{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:12px;padding:8px 10px 8px 12px;margin-bottom:8px;font-size:13.5px}
 .acct .g{flex:1;min-width:0}.acct b{display:block;font-family:var(--disp);font-size:15px;font-weight:600;word-break:break-all}
 .clear{background:var(--get-soft);border-radius:18px;padding:26px 18px;text-align:center;margin-bottom:12px}
@@ -2824,12 +2825,21 @@ function setOffline(n){ const m = onlineMap(); delete m[n]; lsSet(OKEY, JSON.str
 /* ═══════════════ CONTEXT ═══════════════ */
 function ctx(){
   if (S.me && !userBy(S.me)) { S.me = null; saveS(); }
-  const trips = DB.trips.filter(t => t.status === 0 || t.status === 2).sort((a,b) => (a.status-b.status) || (b.id-a.id));
+  const trips = DB.trips.filter(t => (t.status === 0 || t.status === 2) && canSee(t)).sort((a,b) => (a.status-b.status) || (b.id-a.id));
   if (!trips.some(t => t.id === S.trip_id)) { S.trip_id = trips.length ? trips[0].id : null; saveS(); }
   const trip = trips.find(t => t.id === S.trip_id) || null;
   const members = trip ? DB.members.filter(m => m.trip_id === trip.id).map(m => m.name) : [];
   const unread = (S.me && trip) ? DB.notifications.filter(n => n.trip_id===trip.id && n.to_user===S.me && !n.is_read).length : 0;
   return {me:S.me, trips, trip, tid: trip ? trip.id : null, members, closed: !!trip && trip.status === 2, unread, online: onlineNow()};
+}
+/* เห็นทริปได้เฉพาะคนที่อยู่ในทริป หรือผู้สร้างทริป
+   (ทริปเก่าที่ไม่มีทั้งผู้สร้างและสมาชิก ให้ทุกคนเห็น เพื่อไม่ให้กลายเป็นทริปที่ไม่มีใครเข้าถึงได้) */
+function canSee(t){
+  if (!S.me) return false;
+  if (t.created_by === S.me) return true;
+  const mem = DB.members.filter(m => m.trip_id === t.id);
+  if (mem.some(m => m.name === S.me)) return true;
+  return !t.created_by && !mem.length;
 }
 const tripDisp = t => t.trip_date ? `${t.name}  (${t.trip_date})` : t.name;
 function notify(tid, to, msg, from="ระบบสรุปยอด", auto=1){
@@ -3039,7 +3049,7 @@ function vOverview(c, net, exps){
   if (!c.members.length) return h + emptyState("👥","ยังไม่มีเพื่อนในทริปนี้","เพิ่มเพื่อนเข้าทริปก่อน แล้วค่อยเริ่มบันทึกบิล","เพิ่มเพื่อน",`data-act="goto" data-menu="manage" data-tk="manage" data-ti="1"`);
   h += `<div class="quick"><button data-act="addBill" ${c.closed?"disabled":""}><span class="qi">${ic("plus")}</span>เพิ่มบิล</button>
     <button data-act="tab" data-k="home2" data-i="1"><span class="qi">${ic("wallet")}</span>โอนเงิน</button>
-    <a href="https://line.me/R/msg/text/?${encodeURIComponent(lineText(c, net, exps))}" target="_blank" rel="noopener"><span class="qi" style="background:color-mix(in srgb,#06C755 16%,transparent);color:#06C755">${ic("share")}</span>แชร์ LINE</a></div>`;
+    <button data-act="shareLine"><span class="qi" style="background:color-mix(in srgb,#06C755 16%,transparent);color:#06C755">${ic("share")}</span>แชร์ LINE</button></div>`;
   const mine = settlePlan(net).filter(([d,cr]) => d === c.me || cr === c.me);
   if (mine.length){
     h += `<h2>รายการของคุณ</h2><div class="list">` + mine.map(([d,cr,a]) => { const out = d === c.me, o = out ? cr : d;
@@ -3088,16 +3098,17 @@ function vSummary(c, net, exps){
         <div class="btns"><button class="btn pri" data-act="pay" data-i="${i}" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("check")} โอนแล้ว</button>
         ${me===cn?`<button class="btn" style="flex:0 0 auto" data-act="nudge" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("bell")} ทวง</button>`:""}</div>`;
     } else info += `<div class="hint">ให้ ${esc(dn)} หรือ ${esc(cn)} เป็นคนกดยืนยันเมื่อโอนแล้ว</div>`;
-    h += `<div class="tx ${mine?"me":""}">${flowCard(dn,cn,at,me)}<div class="tx-body ${qr?"":"noqr"}">${qr?`<div class="qr"><img src="${qr}" alt="QR พร้อมเพย์ ${esc(cn)} ${fmt(at)} บาท"><div>ยอด ${fmt(at)} ฿ ใส่ไว้แล้ว</div><button class="btn sm ghost" style="width:100%;margin-top:2px" data-act="dlQR" data-pp="${esc(pp)}" data-amt="${at}" data-cn="${esc(cn)}">${ic("dl")} บันทึกรูป</button></div>`:""}<div>${info}</div></div></div>`;
+    h += `<div class="tx ${mine?"me":""}">${flowCard(dn,cn,at,me)}<div class="tx-body ${qr?"":"noqr"}">${qr?`<div class="qr"><img src="${qr}" alt="QR พร้อมเพย์ ${esc(cn)} ${fmt(at)} บาท"><div>ยอด ${fmt(at)} ฿ ใส่ไว้แล้ว</div><div class="qr-btns"><button class="btn sm pri" data-act="shareQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("share")} แชร์</button><button class="btn sm" data-act="dlQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}" aria-label="บันทึกรูป">${ic("dl")}</button></div></div>`:""}<div>${info}</div></div></div>`;
   });
-  if (plan.some(p => (userBy(p[1])||{}).promptpay)) h += `<div class="hint">บันทึกรูป QR แล้วเปิดแอปธนาคาร → สแกน → เลือกรูปจากคลังภาพ ยอดเงินจะขึ้นมาเอง</div>`;
+  if (plan.some(p => (userBy(p[1])||{}).promptpay)) h += `<button class="btn line full" style="margin:2px 0 8px" data-act="shareLine">${ic("share")} ส่งสรุปพร้อมรูป QR เข้า LINE</button>
+    <div class="hint">รูป QR บอกยอดโอนไว้แล้ว เพื่อนบันทึกรูปแล้วเปิดแอปธนาคาร → สแกน → เลือกรูปจากคลังภาพ ยอดเงินขึ้นให้เอง</div>`;
   h += `<h2>ยอดสุทธิรายคน</h2><div class="net-grid">` + Object.entries(net).sort((a,b) => b[1]-a[1]).map(([m,b]) =>
     `<div class="net ${m===me?"me":""}">${avatar(m,36,14)}<div class="g"><div class="nm">${esc(m)}${m===me?" (คุณ)":""}</div><div class="v" style="color:${moneyCls(b)}">${b>0.01?"+":b<-0.01?"−":""}${fmt(Math.abs(b))}</div><div class="s">${b>0.01?"ได้คืน":b<-0.01?"ต้องจ่าย":"เท่ากัน"}</div></div></div>`).join("") + `</div>`;
   const paid = DB.settlements.filter(p => p.trip_id === c.tid).sort((a,b) => b.id-a.id);
   if (paid.length) h += more("payhist", `🧾 ประวัติการโอน (${paid.length})`, `<div class="list">${paid.map(p => `<div class="it"><div class="g"><div class="t1">${esc(p.debtor)} → ${esc(p.creditor)}</div><div class="t2">${esc(p.timestamp)}</div></div><div class="amt" style="color:var(--get)">${fmt(p.amount)}</div>
     ${p.slip_blob?`<button class="btn sm" data-act="zoom" data-t="settlements" data-id="${p.id}">สลิป</button>`:""}<button class="btn sm danger" data-act="unpay" data-id="${p.id}">ยกเลิก</button></div>`).join("")}</div>`);
   const lm = lineText(c, net, exps);
-  h += more("line", "📲 ข้อความสรุปสำหรับแชร์", `<textarea readonly rows="9">${esc(lm)}</textarea><div class="btns" style="margin-top:10px"><button class="btn" data-act="copy" data-v="${esc(lm)}">${ic("copy")} คัดลอก</button><a class="btn line" target="_blank" rel="noopener" href="https://line.me/R/msg/text/?${encodeURIComponent(lm)}">เปิด LINE</a></div>`);
+  h += more("line", "📲 ข้อความสรุปสำหรับแชร์", `<textarea readonly rows="9">${esc(lm)}</textarea><div class="btns" style="margin-top:10px"><button class="btn" data-act="copy" data-v="${esc(lm)}">${ic("copy")} คัดลอก</button><a class="btn" target="_blank" rel="noopener" href="https://line.me/R/msg/text/?${encodeURIComponent(lm)}">ส่งแค่ข้อความ</a></div>`);
   return h;
 }
 
@@ -3265,11 +3276,12 @@ function vMembers(c){
   h += `<h2>เพิ่มเพื่อน</h2>`;
   if (avail.length) h += `<div class="panel"><div class="chips" style="margin-bottom:12px">${avail.map(u => `<label class="chip p"><input type="checkbox" class="addm" value="${esc(u)}">${avatar(u,28,11)} ${esc(u)}<span class="tick">✓</span></label>`).join("")}</div>
     <div class="btns"><button class="btn" style="flex:0 0 auto" data-act="selAllM">เลือกทุกคน</button><button class="btn pri" data-act="addMembers">เพิ่มเข้าทริป</button></div></div>`;
-  h += `<div class="hint">เพื่อนที่ยังไม่มีบัญชี ให้สร้างบัญชีในเครื่องนี้ก่อน (ออกจากระบบ → สร้างบัญชีใหม่) แล้วจะขึ้นมาให้เลือก</div>`;
+  h += `<div class="hint">ทริปนี้จะแสดงเฉพาะคนที่อยู่ในรายชื่อด้านบนและผู้สร้างทริปเท่านั้น</div>`;
+  h += `<div class="hint">เพื่อนที่ยังไม่อยู่ในรายชื่อ ให้เปิดลิงก์แอปแล้วสร้างบัญชีก่อน ชื่อจะขึ้นมาให้เลือกที่นี่</div>`;
   return h;
 }
 function vCross(c){
-  const use = DB.trips.filter(t => (t.status===0||t.status===2) && !(UI.crossOpen && t.status===2)).sort((a,b) => a.id-b.id);
+  const use = DB.trips.filter(t => (t.status===0||t.status===2) && canSee(t) && !(UI.crossOpen && t.status===2)).sort((a,b) => a.id-b.id);
   let h = `<label class="chk" style="margin-bottom:6px"><input type="checkbox" ${UI.crossOpen?"checked":""} data-change="crossOpen"> นับเฉพาะทริปที่ยังไม่ปิด</label>`;
   const total = {}, per = [];
   for (const t of use){ const mem = DB.members.filter(m => m.trip_id===t.id).map(m => m.name), r = computeNet(t.id, mem);
@@ -3286,7 +3298,7 @@ function vCross(c){
   return h;
 }
 function vTrash(c){
-  const dels = DB.trips.filter(t => t.status === 1);
+  const dels = DB.trips.filter(t => t.status === 1 && canSee(t));
   if (!dels.length) return emptyState("🗑️","ถังขยะว่าง","ทริปที่ลบจะพักไว้ที่นี่ก่อน กู้คืนได้ตลอด");
   return `<div class="list">${dels.map(t => `<div class="it"><div class="g"><div class="t1">${esc(t.name)}</div><div class="t2">${t.created_by?`สร้างโดย ${esc(t.created_by)}`:"ไม่มีเจ้าของ กู้คืนแล้วรับเป็นเจ้าของก่อนจึงลบถาวรได้"}</div></div>
     <button class="btn sm" data-act="restoreTrip" data-id="${t.id}">กู้คืน</button>${t.created_by===c.me?`<button class="btn sm danger" data-act="purgeTrip" data-id="${t.id}">ลบถาวร</button>`:""}</div>`).join("")}</div>`;
@@ -3418,6 +3430,7 @@ function render(){
   }
   const cb = document.getElementById("chatBody"); if (cb) cb.scrollTop = cb.scrollHeight;
   if (typeof syncPresence === "function") syncPresence();
+  if (c.me && S.menu === "home" && (S.tabs.home2 ?? 0) <= 1) setTimeout(() => warmQrCards(ctx()), 60);
 }
 
 /* ═══════════════ ACTIONS ═══════════════ */
@@ -3466,7 +3479,7 @@ const ACT = {
   restoreTrip: el => { DB.trips.find(t => t.id === num(el.dataset.id)).status = 0; return ["กู้คืนทริปแล้ว"]; },
   purgeTrip: el => { if (!confirm("ลบถาวร? กู้คืนไม่ได้อีก")) return "skip"; const id = num(el.dataset.id);
     ["settlements","expenses","members","notifications","packing"].forEach(t => DB[t] = DB[t].filter(r => r.trip_id !== id)); DB.trips = DB.trips.filter(t => t.id !== id); return ["ลบถาวรแล้ว"]; },
-  rmMember: el => { if (!confirm(`นำ ${el.dataset.n} ออกจากทริป?`)) return "skip"; const n = el.dataset.n, c = ctx(); DB.members = DB.members.filter(m => !(m.trip_id===c.tid && m.name===n)); return [`นำ ${n} ออกแล้ว`]; },
+  rmMember: el => { if (!confirm(el.dataset.n === S.me && ctx().trip.created_by !== S.me ? "ออกจากทริปนี้? คุณจะมองไม่เห็นทริปนี้อีกจนกว่าจะมีคนเพิ่มกลับ" : `นำ ${el.dataset.n} ออกจากทริป?`)) return "skip"; const n = el.dataset.n, c = ctx(); DB.members = DB.members.filter(m => !(m.trip_id===c.tid && m.name===n)); return [`นำ ${n} ออกแล้ว`]; },
   addMembers: () => { const sel = [...document.querySelectorAll(".addm:checked")].map(x => x.value), c = ctx();
     if (!sel.length) { flash("เลือกเพื่อนอย่างน้อย 1 คน","err"); return "skip"; }
     sel.forEach(n => { if (!DB.members.some(m => m.trip_id===c.tid && m.name===n)) DB.members.push({id:nextId("members"), trip_id:c.tid, name:n}); });
@@ -3626,6 +3639,92 @@ window.addEventListener("storage", e => {
   if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.type !== "checkbox" && a.type !== "radio") return;
   if ([...document.querySelectorAll("input[type=file]")].some(x => x.files.length)) return;
   render();
+});
+/* ═══════════════ QR CARD IMAGE + SHARE ═══════════════
+   รูปการ์ด: ชื่อทริป · โอนให้ใคร · ยอดเงิน · QR พร้อมเพย์ที่ฝังยอดไว้ · เลขพร้อมเพย์/บัญชี
+   แชร์ผ่านเมนูแชร์ของมือถือ (เลือก LINE ได้) เพราะลิงก์ LINE ส่งได้แค่ข้อความ */
+const QRCARD = new Map();     // key -> File (สร้างล่วงหน้า เพื่อให้กดแชร์แล้วเปิดเมนูได้ทันที — iPhone บล็อกถ้ารอนาน)
+const cardKey = (tripName, dn, cn, at, pp) => [tripName, dn, cn, Number(at).toFixed(2), pp].join("|");
+const fmtPP = p => { const d = String(p||"").replace(/\D/g,""); return d.length===10 ? `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}` : d.length===13 ? `${d[0]}-${d.slice(1,5)}-${d.slice(5,10)}-${d.slice(10,12)}-${d[12]}` : p; };
+function rrect(x, X, Y, w, h, r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
+let FONTS_READY = null;
+function cardFonts(){ if (!FONTS_READY) FONTS_READY = Promise.all(['700 70px "Bai Jamjuree"','600 34px "Bai Jamjuree"','500 26px "Anuphan"','400 22px "Anuphan"'].map(f => document.fonts ? document.fonts.load(f).catch(()=>{}) : null)); return FONTS_READY; }
+async function makeQrCard(tripName, dn, cn, at){
+  const u = userBy(cn) || {}, pp = (u.promptpay||"").trim(), payload = ppPayload(pp, at); if (!payload) return null;
+  const k = cardKey(tripName, dn, cn, at, pp); if (QRCARD.has(k)) return QRCARD.get(k);
+  await cardFonts();
+  const W = 720, bank = (u.bank_account||"").trim(), H = bank ? 1130 : 1080;
+  const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
+  const D = (w,s) => `${w} ${s}px "Bai Jamjuree","Anuphan",Tahoma,sans-serif`, F = (w,s) => `${w} ${s}px "Anuphan","Bai Jamjuree",Tahoma,sans-serif`;
+  const t = (s, X, Y, f, col, al="center") => { x.font = f; x.fillStyle = col; x.textAlign = al; x.fillText(s, X, Y); };
+  const fit = (s, f, max) => { x.font = f; if (x.measureText(s).width <= max) return s; while (s.length > 1 && x.measureText(s+"…").width > max) s = s.slice(0,-1); return s+"…"; };
+  x.fillStyle = "#EAF0EE"; x.fillRect(0,0,W,H);
+  rrect(x, 28, 28, W-56, H-56, 36); x.fillStyle = "#fff"; x.fill();
+  // ส่วนหัวสีเข้ม แบบบัตรขึ้นเครื่องเหมือนในแอป
+  x.save(); rrect(x, 28, 28, W-56, H-56, 36); x.clip(); x.fillStyle = "#123F39"; x.fillRect(28, 28, W-56, 300);
+  x.strokeStyle = "rgba(255,255,255,.08)"; x.lineWidth = 2; for (let i=1;i<7;i++){ x.beginPath(); x.ellipse(600, 70, 46*i, 27*i, -0.2, 0, Math.PI*2); x.stroke(); } x.restore();
+  x.textBaseline = "alphabetic";
+  t(fit(tripName || "ทริป", F(500,26), W-140), W/2, 92, F(500,26), "rgba(255,255,255,.72)");
+  t(fit(`${dn}  โอนให้  ${cn}`, D(600,34), W-120), W/2, 146, D(600,34), "#fff");
+  x.font = D(700,78); const amt = fmt(at), aw = x.measureText(amt).width; x.font = D(500,30); const bw = x.measureText(" บาท").width;
+  t(amt, W/2 - bw/2, 252, D(700,78), "#7EF0C0"); t("บาท", W/2 + aw/2 - bw/2 + 10, 252, D(500,30), "rgba(255,255,255,.75)", "left");
+  // รอยปรุ
+  x.setLineDash([12,10]); x.strokeStyle = "#D9E4E0"; x.lineWidth = 3; x.beginPath(); x.moveTo(64, 328); x.lineTo(W-64, 328); x.stroke(); x.setLineDash([]);
+  x.fillStyle = "#EAF0EE"; [28, W-28].forEach(cx => { x.beginPath(); x.arc(cx, 328, 22, 0, Math.PI*2); x.fill(); });
+  // QR
+  t("สแกนจ่ายผ่านพร้อมเพย์", W/2, 378, D(600,26), "#0F6E62");
+  const q = qrCanvas(payload, 12, 2, "#0E332E"), qs = 420; x.imageSmoothingEnabled = false; x.drawImage(q, (W-qs)/2, 396, qs, qs);
+  let y = 396 + qs + 52;
+  t(`พร้อมเพย์ ${fmtPP(pp)}`, W/2, y, D(600,32), "#13221F"); y += 44;
+  if (bank){ t(fit(`${u.bank_name || "บัญชีธนาคาร"} ${bank}`, F(500,25), W-140), W/2, y, F(500,25), "#4A5C57"); y += 50; }
+  t("สแกนด้วยแอปธนาคาร ยอดเงินขึ้นให้เอง ไม่ต้องพิมพ์", W/2, y + 12, F(400,23), "#7B8C87");
+  t("Trip Splitter", W/2, H - 58, D(600,20), "#B5C4BF");
+  const blob = await new Promise(r => c.toBlob(r, "image/png"));
+  const file = new File([blob], `QR_${dn}_โอนให้_${cn}_${amt.replace(/,/g,"")}บาท.png`, {type:"image/png"});
+  QRCARD.set(k, file); return file;
+}
+function warmQrCards(c){
+  if (!c || !c.trip || !window.HTMLCanvasElement) return;
+  const plan = settlePlan(computeNet(c.tid, c.members).net);
+  (async () => { for (const [dn, cn, at] of plan) { try { await makeQrCard(c.trip.name, dn, cn, at); } catch(e){} } })();
+}
+function cachedCards(c){
+  const plan = settlePlan(computeNet(c.tid, c.members).net), out = [];
+  for (const [dn, cn, at] of plan){ const pp = ((userBy(cn)||{}).promptpay||"").trim(); const f = pp && QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp)); if (f) out.push(f); }
+  return out;
+}
+function canShareFiles(files){ try { return !!(navigator.canShare && navigator.share && navigator.canShare({files})); } catch(e){ return false; } }
+function dlFile(f){ const url = URL.createObjectURL(f); download(f.name, url); setTimeout(() => URL.revokeObjectURL(url), 4000); }
+function copyQuiet(s){ try { navigator.clipboard && navigator.clipboard.writeText(s).catch(()=>{}); } catch(e){} }
+
+Object.assign(ACT, {
+  shareQR: el => {
+    const c = ctx(), {dn, cn} = el.dataset, at = num(el.dataset.amt), pp = ((userBy(cn)||{}).promptpay||"").trim();
+    const f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp));
+    const text = `${dn} โอนให้ ${cn} ${fmt(at)} บาท (${c.trip.name})\nพร้อมเพย์ ${pp} — สแกน QR ในรูป ยอดเงินขึ้นให้เอง`;
+    if (!f){ makeQrCard(c.trip.name, dn, cn, at).then(x => { if (x){ dlFile(x); flash("บันทึกรูป QR แล้ว"); } }); return "skip"; }
+    if (canShareFiles([f])){ copyQuiet(text); navigator.share({files:[f], text}).catch(e => { if (e.name !== "AbortError"){ dlFile(f); flash("บันทึกรูป QR แล้ว"); } }); }
+    else { dlFile(f); flash("บันทึกรูป QR แล้ว — ส่งรูปนี้เข้า LINE ได้เลย"); }
+    return "skip";
+  },
+  dlQR: el => { const c = ctx(), {dn, cn} = el.dataset, at = num(el.dataset.amt);
+    const pp = ((userBy(cn)||{}).promptpay||"").trim(), f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp));
+    if (f){ dlFile(f); flash("บันทึกรูป QR แล้ว"); } else makeQrCard(c.trip.name, dn, cn, at).then(x => { if (x){ dlFile(x); flash("บันทึกรูป QR แล้ว"); } });
+    return "skip"; },
+  shareLine: () => {
+    const c = ctx(); if (!c.trip) return "skip";
+    const {net, exps} = computeNet(c.tid, c.members), text = lineText(c, net, exps), files = cachedCards(c);
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+    if (files.length && canShareFiles(files)){
+      copyQuiet(text);
+      navigator.share({files, text}).then(() => flash("ถ้าใน LINE ไม่มีข้อความสรุป กดวางได้เลย คัดลอกไว้ให้แล้ว","info"))
+        .catch(e => { if (e.name !== "AbortError") window.open(lineUrl, "_blank"); });
+    } else {
+      window.open(lineUrl, "_blank");
+      if (files.length){ files.forEach(dlFile); flash(`บันทึกรูป QR ${files.length} รูปแล้ว แนบในแชท LINE ได้เลย`,"info"); }
+    }
+    return "skip";
+  },
 });
 /* ═══════════════ CLOUD SYNC (Supabase) ═══════════════
    แนวคิด: ตัวแอปยังทำงานกับ DB ในหน่วยความจำเหมือนเดิมทุกอย่าง
