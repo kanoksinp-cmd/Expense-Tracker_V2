@@ -3221,7 +3221,22 @@ function vPacking(c){
       <div class="pk-ctl"><select ${dis} data-change="packWho" data-id="${p.id}" aria-label="ผู้รับผิดชอบ"><option value="">ยังไม่มีคนรับ</option>${c.members.map(m => opt(m,p.assignee)).join("")}</select>
       <input type="number" min="0" step="0.01" inputmode="decimal" placeholder="ราคา" value="${cur?cur.toFixed(2):""}" ${dis} data-change="packPrice" data-id="${p.id}" aria-label="ราคา">
       <button class="btn sm danger" ${dis} data-act="packDel" data-id="${p.id}" aria-label="ลบ">ลบ</button></div></div>`; }).join("") + `</div>`;
-  return h + `<div class="hint">ใส่ราคาแล้วกด Enter ระบบจะทำเป็นบิลหารกันทุกคนให้เอง ใส่ 0 เพื่อยกเลิกบิล</div>`;
+  return h + `<div class="hint">ใส่ราคาแล้วกด Enter ระบบจะทำเป็นบิลหารกันทุกคนให้เอง ใส่ 0 เพื่อยกเลิกบิล</div>
+    <h2>ส่งรายการสัมภาระเข้า LINE</h2>
+    <div class="btns" style="margin:0 0 8px"><button class="btn line" style="flex:1" data-act="sharePack">${ic("share")} แบบข้อความ</button><button class="btn line" style="flex:1" data-act="sharePackImg">${ic("image")} แบบรูปภาพ</button></div>
+    <div class="hint">ข้อความ: เพื่อนก๊อปไปแก้ต่อได้ · รูปภาพ: อ่านง่าย เห็นว่าใครหิ้วอะไรในรูปเดียว</div>`;
+}
+// ข้อความรายการสัมภาระสำหรับ LINE: แยกตามคนหิ้ว ของที่ยังไม่มีคนรับไว้ท้ายสุด
+function packText(c){
+  const packs = DB.packing.filter(p => p.trip_id === c.tid).sort((a,b) => a.id-b.id);
+  const done = packs.filter(p => p.done).length;
+  let t = `🎒 สัมภาระ: ${c.trip.name}\n` + (c.trip.trip_date ? `📅 ${thDate(c.trip.trip_date)}\n` : "") + `เตรียมแล้ว ${done}/${packs.length}\n========================\n`;
+  const line = p => `${p.done?"✅":"⬜"} ${p.item}${p.qty?` (${p.qty})`:""}\n`;
+  const who = [...new Set(packs.map(p => p.assignee).filter(Boolean))];
+  who.forEach(w => { t += `👤 ${w}\n` + packs.filter(p => p.assignee === w).map(line).join("") + "\n"; });
+  const none = packs.filter(p => !p.assignee);
+  if (none.length) t += `❓ ยังไม่มีคนรับ\n` + none.map(line).join("") + "\n";
+  return t + "========================";
 }
 
 /* ═══════════════ CAMP ═══════════════ */
@@ -3455,6 +3470,7 @@ function render(){
   const cb = document.getElementById("chatBody"); if (cb) cb.scrollTop = cb.scrollHeight;
   if (typeof syncPresence === "function") syncPresence();
   if (c.me && S.menu === "home" && (S.tabs.home2 ?? 0) <= 1) setTimeout(() => warmQrCards(ctx()), 60);
+  if (c.me && S.menu === "home" && (S.tabs.home2 ?? 0) === 2) setTimeout(() => { const x = ctx(); if (x.trip && window.HTMLCanvasElement) makePackCard(x).catch(()=>{}); }, 60);
 }
 
 /* ═══════════════ ACTIONS ═══════════════ */
@@ -3745,6 +3761,57 @@ function warmQrCards(c){
   const plan = settlePlan(computeNet(c.tid, c.members).net);
   (async () => { for (const [dn, cn, at] of plan) { try { await makeQrCard(c.trip.name, dn, cn, at); } catch(e){} } })();
 }
+/* รูปรายการสัมภาระ (แยกตามคนหิ้ว) — สร้างล่วงหน้าตอนเปิดแท็บ เพื่อให้กดแชร์บน iPhone แล้วเปิดเมนูได้ทันที */
+const PACKCARD = new Map();
+function packCardKey(c){ return JSON.stringify([c.trip.name, c.trip.trip_date, DB.packing.filter(p => p.trip_id === c.tid).map(p => [p.id, p.item, p.qty, p.assignee, p.done])]); }
+async function makePackCard(c){
+  const k = packCardKey(c); if (PACKCARD.has(k)) return PACKCARD.get(k);
+  const packs = DB.packing.filter(p => p.trip_id === c.tid).sort((a,b) => (a.done-b.done) || (a.id-b.id)); if (!packs.length) return null;
+  await cardFonts();
+  const who = [...new Set(packs.map(p => p.assignee).filter(Boolean))].sort((a,b) => a === c.me ? -1 : b === c.me ? 1 : 0);
+  const groups = who.map(w => [w, packs.filter(p => p.assignee === w)]), none = packs.filter(p => !p.assignee);
+  if (none.length) groups.push([null, none]);
+  const W = 720, HEAD = 300, ROW = 54, GH = 70, GAP = 22;
+  const H = HEAD + 40 + groups.reduce((a,[,l]) => a + GH + l.length*ROW + GAP, 0) + 70;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
+  const D = (w,s) => `${w} ${s}px "Bai Jamjuree","Anuphan",Tahoma,sans-serif`, F = (w,s) => `${w} ${s}px "Anuphan","Bai Jamjuree",Tahoma,sans-serif`;
+  const t = (s, X, Y, f, col, al="center", maxW=W-130) => drawText(x, s, X, Y, f, col, al, maxW);
+  x.fillStyle = "#EAF0EE"; x.fillRect(0,0,W,H);
+  rrect(x, 28, 28, W-56, H-56, 36); x.fillStyle = "#fff"; x.fill();
+  x.save(); rrect(x, 28, 28, W-56, H-56, 36); x.clip(); x.fillStyle = "#123F39"; x.fillRect(28, 28, W-56, HEAD-28);
+  x.strokeStyle = "rgba(255,255,255,.08)"; x.lineWidth = 2; for (let i=1;i<7;i++){ x.beginPath(); x.ellipse(600, 70, 46*i, 27*i, -0.2, 0, Math.PI*2); x.stroke(); } x.restore();
+  x.textBaseline = "alphabetic";
+  t(c.trip.trip_date ? thDate(c.trip.trip_date) : "รายการสัมภาระ", W/2, 92, F(500,26), "rgba(255,255,255,.72)");
+  t(`🎒 ${c.trip.name}`, W/2, 150, D(700,40), "#fff");
+  const done = packs.filter(p => p.done).length;
+  t(`เตรียมแล้ว ${done}/${packs.length} ชิ้น`, W/2, 206, F(500,26), "#7EF0C0");
+  rrect(x, 110, 232, W-220, 14, 7); x.fillStyle = "rgba(255,255,255,.15)"; x.fill();
+  if (done){ rrect(x, 110, 232, Math.max(14, (W-220)*done/packs.length), 14, 7); x.fillStyle = "#7EF0C0"; x.fill(); }
+  let y = HEAD + 40;
+  groups.forEach(([w, list]) => {
+    const col = w ? personColor(w) : "#8A9A95", left = list.filter(p => !p.done).length;
+    rrect(x, 64, y, 46, 46, 23); x.fillStyle = col; x.fill();
+    t(w ? [...w][0].toUpperCase() : "?", 87, y + 32, D(700,22), "#fff", "center", 40);
+    t(w ? `${w}${w === c.me ? " (คุณ)" : ""}` : "ยังไม่มีคนรับ", 126, y + 32, D(600,28), "#13221F", "left", W-360);
+    t(left ? `เหลือ ${left} ชิ้น` : "ครบแล้ว ✓", W-64, y + 32, F(500,22), left ? "#B45309" : "#0F6E62", "right", 200);
+    y += GH;
+    list.forEach(p => {
+      const bx = 84, by = y + 6;
+      rrect(x, bx, by, 30, 30, 8);
+      if (p.done){ x.fillStyle = "#0F6E62"; x.fill(); x.strokeStyle = "#fff"; x.lineWidth = 4; x.lineCap = "round"; x.beginPath(); x.moveTo(bx+8, by+16); x.lineTo(bx+13, by+22); x.lineTo(bx+23, by+9); x.stroke(); }
+      else { x.strokeStyle = "#B5C4BF"; x.lineWidth = 3; x.stroke(); }
+      const nw = t(p.item, 132, y + 32, F(500,26), p.done ? "#9AAAA5" : "#13221F", "left", W-360);
+      if (p.done){ x.fillStyle = "#9AAAA5"; x.fillRect(132, y + 22, nw, 2); }
+      if (p.qty) t(p.qty, W-64, y + 32, F(400,22), "#7B8C87", "right", 180);
+      y += ROW;
+    });
+    y += GAP;
+  });
+  t("Trip Splitter", W/2, H - 58, D(600,20), "#B5C4BF");
+  const blob = await new Promise(r => cv.toBlob(r, "image/png"));
+  const file = new File([blob], `สัมภาระ_${c.trip.name}.png`, {type:"image/png"});
+  PACKCARD.clear(); PACKCARD.set(k, file); return file;
+}
 function cachedCards(c){
   const plan = settlePlan(computeNet(c.tid, c.members).net), out = [];
   for (const [dn, cn, at] of plan){ const f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, payKey(userBy(cn))));  if (f) out.push(f); }
@@ -3770,6 +3837,20 @@ Object.assign(ACT, {
     const saved = payTarget(u, at) ? "บันทึกรูป QR แล้ว" : "บันทึกรูปยอดโอนแล้ว";
     if (f){ dlFile(f); flash(saved); } else makeQrCard(c.trip.name, dn, cn, at).then(x => { if (x){ dlFile(x); flash(saved); } });
     return "skip"; },
+  sharePackImg: () => {
+    const c = ctx(); if (!c.trip) return "skip";
+    const f = PACKCARD.get(packCardKey(c));
+    if (!f){ makePackCard(c).then(x => { if (x){ dlFile(x); flash("บันทึกรูปแล้ว แนบในแชท LINE ได้เลย"); } }); return "skip"; }
+    if (canShareFiles([f])) navigator.share({files:[f]}).catch(e => { if (e.name !== "AbortError"){ dlFile(f); flash("บันทึกรูปแล้ว แนบในแชท LINE ได้เลย"); } });
+    else { dlFile(f); flash("บันทึกรูปแล้ว แนบในแชท LINE ได้เลย"); }
+    return "skip";
+  },
+  sharePack: () => {
+    const c = ctx(); if (!c.trip) return "skip";
+    const text = packText(c); copyQuiet(text);
+    window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, "_blank");
+    return "skip";
+  },
   shareLine: () => {
     const c = ctx(); if (!c.trip) return "skip";
     const {net, exps} = computeNet(c.tid, c.members), text = lineText(c, net, exps), files = cachedCards(c);
