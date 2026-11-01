@@ -2793,6 +2793,23 @@ function ppPayload(raw, amount){
   p += tlv("58","TH") + "6304";
   return p + ppCrc(p);
 }
+// QR โอนเข้าเลขบัญชี (มาตรฐาน Thai QR: tag 29 ช่อง 04 = รหัสธนาคาร 3 หลัก + เลขบัญชี)
+const BANK_CODE = {KBANK:"004",SCB:"014",KTB:"006",BBL:"002",BAY:"025",TTB:"011",GSB:"030",UOB:"024","ธ.ก.ส.":"034",BAAC:"034"};
+function bankCode(name){ const n = (name||"").trim(), m = /\(([^)]+)\)/.exec(n); return BANK_CODE[(m ? m[1] : n).toUpperCase()] || BANK_CODE[n] || null; }
+function bankPayload(bankName, acct, amount){
+  const code = bankCode(bankName), d = String(acct||"").replace(/\D/g,""); if (!code || d.length < 6) return null;
+  let p = tlv("00","01") + tlv("01", amount ? "12" : "11") + tlv("29", tlv("00","A000000677010111") + tlv("04", code + d)) + tlv("53","764");
+  if (amount) p += tlv("54", Number(amount).toFixed(2));
+  p += tlv("58","TH") + "6304";
+  return p + ppCrc(p);
+}
+// มีพร้อมเพย์ใช้พร้อมเพย์ ไม่มีก็ใช้เลขบัญชี → {payload, kind:"pp"|"bank"} หรือ null
+function payTarget(u, amount){
+  u = u || {}; const pp = (u.promptpay||"").trim();
+  if (pp){ const p = ppPayload(pp, amount); if (p) return {payload:p, kind:"pp"}; }
+  const b = bankPayload(u.bank_name, u.bank_account, amount); return b ? {payload:b, kind:"bank"} : null;
+}
+const payKey = u => [(u||{}).promptpay||"", (u||{}).bank_name||"", (u||{}).bank_account||""].join("~");
 const QR_CACHE = {};
 function qrCanvas(text, box=8, border=3, color="#000"){
   const q = qrcode(0, "M"); q.addData(text); q.make();
@@ -2903,9 +2920,9 @@ async function offlineSheet(c){
   hr(); text("แผนโอนเงิน",28,y,F(23,600),"#000"); y += 36;
   if (!plan.length){ text("ไม่มีใครต้องโอนให้ใคร",36,y,F(18),"#6b7280"); y += 30; }
   plan.forEach(([d,cr,a]) => { const hl = c.me===d||c.me===cr; text(`${d}  →  ${cr}`,36,y,F(18),hl?"#000":"#6b7280"); drawText(x, `${fmt(a)} บาท`, W-36, y+18, F(18,600), hl?"#dc2626":"#9ca3af", "right"); y += 32; });
-  const mineRow = plan.find(([d,cr]) => d === c.me && (userBy(cr)||{}).promptpay);
+  const mineRow = plan.find(([d,cr,a]) => d === c.me && payTarget(userBy(cr), a));
   if (mineRow){
-    const [, cr, a] = mineRow, p = ppPayload(userBy(cr).promptpay, a);
+    const [, cr, a] = mineRow, p = payTarget(userBy(cr), a).payload;
     if (p){ y += 8; text(`สแกนโอนให้ ${cr}  (${fmt(a)} บาท)`,28,y,F(18,600),"#000"); const q = qrCanvas(p,5,3); x.drawImage(q,28,y+28,220,220); y += 28+220+12; }
   }
   if (packs.length){
@@ -3009,7 +3026,7 @@ function billRow(e, me){
   const sl = splitList(e.split_members), sh = splitAmounts(e.amount, sl, e.split_detail, e.id), mine = sh[me], cat = catOf(e);
   const tile = e.image_blob ? `<div class="cat-ico" style="background-image:url(${e.image_blob})"></div>` : catTile(cat);
   return `<button class="it" data-act="sheet" data-s="edit" data-id="${e.id}">${tile}<div class="g"><div class="t1">${esc(e.description)}</div>
-    <div class="t2">${esc(e.payer_name)} จ่าย · หาร ${sl.length} คน${e.image_blob?" · มีสลิป":""}</div></div>
+    <div class="t2">${esc(e.payer_name)} จ่าย · ${sl.length===1?(sl[0]===e.payer_name?"จ่ายของตัวเอง":`ของ ${esc(sl[0])}`):`หาร ${sl.length} คน`}${e.image_blob?" · มีสลิป":""}</div></div>
     <div class="amt">${fmt(e.amount)}${mine!=null?`<small>ส่วนคุณ ${fmt(mine)}</small>`:""}</div></button>`;
 }
 
@@ -3053,7 +3070,7 @@ function vOverview(c, net, exps){
   const mine = settlePlan(net).filter(([d,cr]) => d === c.me || cr === c.me);
   if (mine.length){
     h += `<h2>รายการของคุณ</h2><div class="list">` + mine.map(([d,cr,a]) => { const out = d === c.me, o = out ? cr : d;
-      return `<button class="it" data-act="tab" data-k="home2" data-i="1">${avatar(o,40,15)}<div class="g"><div class="t1">${out?`โอนให้ ${esc(o)}`:`${esc(o)} ต้องโอนให้คุณ`}</div><div class="t2">${out?"แตะเพื่อดู QR พร้อมเพย์":"แตะเพื่อดูหรือส่งข้อความทวง"}</div></div><div class="amt" style="color:${out?"var(--owe)":"var(--get)"}">${fmt(a)}</div></button>`; }).join("") + `</div>`;
+      return `<button class="it" data-act="tab" data-k="home2" data-i="1">${avatar(o,40,15)}<div class="g"><div class="t1">${out?`โอนให้ ${esc(o)}`:`${esc(o)} ต้องโอนให้คุณ`}</div><div class="t2">${out?(payTarget(userBy(o), a)?"แตะเพื่อดู QR โอนเงิน":"แตะเพื่อดูเลขบัญชี"):"แตะเพื่อดูหรือส่งข้อความทวง"}</div></div><div class="amt" style="color:${out?"var(--owe)":"var(--get)"}">${fmt(a)}</div></button>`; }).join("") + `</div>`;
   }
   if (!exps.length) return h + emptyState("🧾","ยังไม่มีบิล","กดปุ่ม + ด้านล่างเพื่อบันทึกบิลแรก ระบบจะคำนวณให้เองว่าใครต้องโอนให้ใคร");
   const recent = [...exps].sort((a,b) => b.id-a.id).slice(0,4);
@@ -3072,9 +3089,9 @@ function lineText(c, net, exps){
   let lm = `📊 สรุปบิล: ${c.trip.name}\n` + (c.trip.trip_date ? `📅 ${thDate(c.trip.trip_date)}\n` : "") + "========================\n";
   exps.forEach((e,i) => { const sh = splitAmounts(e.amount, splitList(e.split_members), e.split_detail, e.id), vals = Object.values(sh);
     lm += `${i+1}. ${e.description} | ${fmt(e.amount)} ฿ | ${e.payer_name}\n`;
-    if (new Set(vals.map(v => v.toFixed(2))).size > 1) Object.entries(sh).forEach(([n,v]) => lm += `   - ${n} ${fmt(v)} ฿\n`); else lm += `   คนละ ${fmt(vals[0]||0)} ฿\n`; });
+    if (new Set(vals.map(v => v.toFixed(2))).size > 1) Object.entries(sh).forEach(([n,v]) => lm += `   - ${n} ${fmt(v)} ฿\n`); else if (vals.length === 1) lm += `   ของ ${Object.keys(sh)[0]}\n`; else lm += `   คนละ ${fmt(vals[0]||0)} ฿\n`; });
   lm += `รวม: ${fmt(sum(exps.map(e=>e.amount)))} ฿\n========================\n`;
-  plan.forEach(([dn,cn,am]) => { const u = userBy(cn)||{}; lm += `💳 ${dn} → ${cn} = ${fmt(am)} ฿\n`; if (u.promptpay) lm += `   📱 ${u.promptpay}\n`; if (u.bank_account) lm += `   🏦 ${u.bank_name||"บัญชี"}: ${u.bank_account}\n`; });
+  plan.forEach(([dn,cn,am]) => { const u = userBy(cn)||{}; lm += `💳 ${dn} → ${cn} = ${fmt(am)} ฿\n`; if (u.promptpay) lm += `   📱 ${u.promptpay}\n`; else if (u.bank_account) lm += `   🏦 ${u.bank_name||"บัญชี"}: ${u.bank_account}\n`; });
   return lm + "========================";
 }
 function flowCard(dn, cn, at, me, size=46){
@@ -3088,24 +3105,27 @@ function vSummary(c, net, exps){
   if (!plan.length) h += `<div class="clear"><div class="e">🎉</div><div class="t">เคลียร์ครบทุกคนแล้ว</div><div class="s">ไม่มีใครต้องโอนให้ใครอีก</div></div>`;
   plan.forEach(([dn,cn,at], i) => {
     const u = userBy(cn) || {}, pp = (u.promptpay||"").trim(), bn = (u.bank_name||"").trim(), ba = (u.bank_account||"").trim(), mine = me===dn || me===cn;
-    const qr = pp ? ppQrUri(pp, at, 6, "#0E332E") : null;
+    const tg = payTarget(u, at), qk = `${payKey(u)}|${at}`;
+    if (tg && !(qk in QR_CACHE)) QR_CACHE[qk] = qrCanvas(tg.payload, 6, 2, "#0E332E").toDataURL("image/png");
+    const qr = tg ? QR_CACHE[qk] : null, qrLbl = tg && tg.kind === "bank" ? `QR โอนเข้าบัญชี ${esc(cn)}` : `QR พร้อมเพย์ ${esc(cn)}`;
     let info = "";
     if (pp) info += `<div class="acct"><div class="g">พร้อมเพย์ ${esc(cn)}<b>${esc(pp)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(pp)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
-    if (ba) info += `<div class="acct"><div class="g">${esc(bn||"บัญชีธนาคาร")}<b>${esc(ba)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(ba)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
-    if (!pp) info += cn === me
-      ? `<div class="notice" style="margin-bottom:8px">💳<div style="flex:1">${ba?"ใส่พร้อมเพย์ด้วย":"คุณยังไม่ได้ใส่บัญชีรับเงิน"} แอปจะสร้างรูป QR พร้อมยอดเงินให้เพื่อนสแกนจ่ายได้ทันที</div><button class="btn sm pri" data-act="goPP">ใส่พร้อมเพย์</button></div>`
-      : `<div class="notice" style="margin-bottom:8px">💳<div>${esc(cn)} ยังไม่ได้ใส่พร้อมเพย์ จึงยังไม่มีรูป QR${ba?" (โอนเข้าบัญชีด้านบนได้)":""} บอก ${esc(cn)} ให้ใส่ที่หน้าโปรไฟล์</div></div>`;
-    if (!pp && ba) info += `<div class="btns" style="margin-bottom:8px"><button class="btn sm" data-act="shareQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("share")} แชร์รูปยอดโอน</button></div>`;
+    else if (ba) info += `<div class="acct"><div class="g">${esc(bn||"บัญชีธนาคาร")}<b>${esc(ba)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(ba)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
+    if (!pp && !ba) info += cn === me
+      ? `<div class="notice" style="margin-bottom:8px">💳<div style="flex:1">คุณยังไม่ได้ใส่บัญชีรับเงิน ใส่พร้อมเพย์แล้วแอปจะสร้างรูป QR พร้อมยอดเงินให้เพื่อนสแกนจ่ายได้ทันที</div><button class="btn sm pri" data-act="goPP">ใส่บัญชี</button></div>`
+      : `<div class="notice" style="margin-bottom:8px">💳<div>${esc(cn)} ยังไม่ได้ใส่บัญชีรับเงิน ถามเลขบัญชีจาก ${esc(cn)} หรือบอกให้ใส่ที่หน้าโปรไฟล์</div></div>`;
+    if (!pp && ba && !qr) info += `<div class="notice" style="margin-bottom:8px">💳<div>สร้าง QR จากเลขบัญชีนี้ไม่ได้ เพราะ${bankCode(bn)?"เลขบัญชีไม่ถูกต้อง":"ยังไม่ได้เลือกธนาคาร"} โอนตามเลขบัญชีด้านบนได้เลย</div></div>
+      <div class="btns" style="margin-bottom:8px"><button class="btn sm" data-act="shareQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("share")} แชร์รูปยอดโอน</button></div>`;
     if (mine){
       info += `<label class="drop" style="margin:4px 0 8px;padding:8px 10px"><span class="ph" style="width:38px;height:38px" data-ph>${ic("image")}</span><span data-fn>แนบสลิปการโอน (ไม่บังคับ)</span><input type="file" id="paySlip_${i}" accept="image/*" data-change="slipPick"></label>
         <div class="btns"><button class="btn pri" data-act="pay" data-i="${i}" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("check")} โอนแล้ว</button>
         ${me===cn?`<button class="btn" style="flex:0 0 auto" data-act="nudge" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("bell")} ทวง</button>`:""}</div>`;
     } else info += `<div class="hint">ให้ ${esc(dn)} หรือ ${esc(cn)} เป็นคนกดยืนยันเมื่อโอนแล้ว</div>`;
-    h += `<div class="tx ${mine?"me":""}">${flowCard(dn,cn,at,me)}<div class="tx-body ${qr?"":"noqr"}">${qr?`<div class="qr"><img src="${qr}" alt="QR พร้อมเพย์ ${esc(cn)} ${fmt(at)} บาท"><div>ยอด ${fmt(at)} ฿ ใส่ไว้แล้ว</div><div class="qr-btns"><button class="btn sm pri" data-act="shareQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("share")} แชร์</button><button class="btn sm" data-act="dlQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}" aria-label="บันทึกรูป">${ic("dl")}</button></div></div>`:""}<div>${info}</div></div></div>`;
+    h += `<div class="tx ${mine?"me":""}">${flowCard(dn,cn,at,me)}<div class="tx-body ${qr?"":"noqr"}">${qr?`<div class="qr"><img src="${qr}" alt="${qrLbl} ${fmt(at)} บาท"><div>ยอด ${fmt(at)} ฿ ใส่ไว้แล้ว</div><div class="qr-btns"><button class="btn sm pri" data-act="shareQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("share")} แชร์</button><button class="btn sm" data-act="dlQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}" aria-label="บันทึกรูป">${ic("dl")}</button></div></div>`:""}<div>${info}</div></div></div>`;
   });
-  if (plan.length){ const anyPP = plan.some(p => (userBy(p[1])||{}).promptpay);
-    h += `<button class="btn line full" style="margin:2px 0 8px" data-act="shareLine">${ic("share")} ${anyPP?"ส่งสรุปพร้อมรูป QR เข้า LINE":"ส่งสรุปเข้า LINE"}</button>
-    <div class="hint">${anyPP?"รูป QR บอกยอดโอนไว้แล้ว เพื่อนบันทึกรูปแล้วเปิดแอปธนาคาร → สแกน → เลือกรูปจากคลังภาพ ยอดเงินขึ้นให้เอง":"ยังไม่มีรูป QR เพราะคนรับเงินยังไม่ได้ใส่พร้อมเพย์ ใส่แล้วปุ่มนี้จะแนบรูป QR ไปให้ด้วย"}</div>`; }
+  if (plan.length){ const anyPP = plan.some(p => payTarget(userBy(p[1]), p[2])), anyBA = plan.some(p => (userBy(p[1])||{}).bank_account);
+    h += `<button class="btn line full" style="margin:2px 0 8px" data-act="shareLine">${ic("share")} ${anyPP?"ส่งสรุปพร้อมรูป QR เข้า LINE":anyBA?"ส่งสรุปพร้อมรูปยอดโอนเข้า LINE":"ส่งสรุปเข้า LINE"}</button>
+    <div class="hint">${anyPP?"รูป QR บอกยอดโอนไว้แล้ว เพื่อนบันทึกรูปแล้วเปิดแอปธนาคาร → สแกน → เลือกรูปจากคลังภาพ ยอดเงินขึ้นให้เอง":anyBA?"ปุ่มนี้แนบรูปยอดโอนพร้อมเลขบัญชีไปให้ด้วย":"คนรับเงินยังไม่ได้ใส่บัญชีรับเงิน ใส่แล้วปุ่มนี้จะแนบรูป QR ไปให้ด้วย"}</div>`; }
   h += `<h2>ยอดสุทธิรายคน</h2><div class="net-grid">` + Object.entries(net).sort((a,b) => b[1]-a[1]).map(([m,b]) =>
     `<div class="net ${m===me?"me":""}">${avatar(m,36,14)}<div class="g"><div class="nm">${esc(m)}${m===me?" (คุณ)":""}</div><div class="v" style="color:${moneyCls(b)}">${b>0.01?"+":b<-0.01?"−":""}${fmt(Math.abs(b))}</div><div class="s">${b>0.01?"ได้คืน":b<-0.01?"ต้องจ่าย":"เท่ากัน"}</div></div></div>`).join("") + `</div>`;
   const paid = DB.settlements.filter(p => p.trip_id === c.tid).sort((a,b) => b.id-a.id);
@@ -3677,11 +3697,11 @@ function drawText(ctx, s, ax, y, font, color, align="center", maxW=0){
 let FONTS_READY = null;
 function cardFonts(){ if (!FONTS_READY) FONTS_READY = Promise.all(['700 70px "Bai Jamjuree"','600 34px "Bai Jamjuree"','500 26px "Anuphan"','400 22px "Anuphan"'].map(f => document.fonts ? document.fonts.load(f).catch(()=>{}) : null)); return FONTS_READY; }
 async function makeQrCard(tripName, dn, cn, at){
-  const u = userBy(cn) || {}, pp = (u.promptpay||"").trim(), payload = ppPayload(pp, at), bankAcc = (u.bank_account||"").trim();
+  const u = userBy(cn) || {}, pp = (u.promptpay||"").trim(), tg = payTarget(u, at), payload = tg && tg.payload, isBank = !!tg && tg.kind === "bank", bankAcc = (u.bank_account||"").trim();
   if (!payload && !bankAcc) return null;      // ไม่มีทั้งพร้อมเพย์และบัญชี = ไม่มีข้อมูลให้โอน
-  const k = cardKey(tripName, dn, cn, at, pp); if (QRCARD.has(k)) return QRCARD.get(k);
+  const k = cardKey(tripName, dn, cn, at, payKey(u)); if (QRCARD.has(k)) return QRCARD.get(k);
   await cardFonts();
-  const W = 720, bank = bankAcc, H = payload ? (bank ? 1130 : 1080) : 780;
+  const W = 720, bank = isBank ? bankAcc : "", H = payload ? (bank ? 1130 : 1080) : 780;
   const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
   const D = (w,s) => `${w} ${s}px "Bai Jamjuree","Anuphan",Tahoma,sans-serif`, F = (w,s) => `${w} ${s}px "Anuphan","Bai Jamjuree",Tahoma,sans-serif`;
   const t = (s, X, Y, f, col, al="center", maxW=W-130) => drawText(x, s, X, Y, f, col, al, maxW);
@@ -3705,19 +3725,19 @@ async function makeQrCard(tripName, dn, cn, at){
     t("โอนเข้าบัญชี", W/2, 400, D(600,26), "#0F6E62");
     t(u.bank_name || "บัญชีธนาคาร", W/2, 460, F(500,30), "#4A5C57");
     rrect(x, 80, 490, W-160, 100, 20); x.fillStyle = "#F3F7F5"; x.fill();
-    t(bank, W/2, 558, D(700,48), "#13221F");
+    t(bankAcc, W/2, 558, D(700,48), "#13221F");
     t(`ผู้รับเงิน ${cn}`, W/2, 636, F(500,24), "#7B8C87");
   } else {
-  t("สแกนจ่ายผ่านพร้อมเพย์", W/2, 378, D(600,26), "#0F6E62");
+  t(isBank ? "สแกนโอนเข้าบัญชี" : "สแกนจ่ายผ่านพร้อมเพย์", W/2, 378, D(600,26), "#0F6E62");
   const q = qrCanvas(payload, 12, 2, "#0E332E"), qs = 420; x.imageSmoothingEnabled = false; x.drawImage(q, (W-qs)/2, 396, qs, qs); x.imageSmoothingEnabled = true;
   let y = 396 + qs + 52;
-  t(`พร้อมเพย์ ${fmtPP(pp)}`, W/2, y, D(600,32), "#13221F"); y += 44;
-  if (bank){ t(`${u.bank_name || "บัญชีธนาคาร"} ${bank}`, W/2, y, F(500,25), "#4A5C57"); y += 50; }
+  if (isBank){ t(u.bank_name || "บัญชีธนาคาร", W/2, y, F(500,25), "#4A5C57"); y += 44; t(bank, W/2, y, D(600,32), "#13221F"); y += 50; }
+  else { t(`พร้อมเพย์ ${fmtPP(pp)}`, W/2, y, D(600,32), "#13221F"); y += 44; }
   t("สแกนด้วยแอปธนาคาร ยอดเงินขึ้นให้เอง ไม่ต้องพิมพ์", W/2, y + 12, F(400,23), "#7B8C87");
   }
   t("Trip Splitter", W/2, H - 58, D(600,20), "#B5C4BF");
   const blob = await new Promise(r => c.toBlob(r, "image/png"));
-  const file = new File([blob], `QR_${dn}_โอนให้_${cn}_${amt.replace(/,/g,"")}บาท.png`, {type:"image/png"});
+  const file = new File([blob], `${payload?"QR":"โอน"}_${dn}_โอนให้_${cn}_${amt.replace(/,/g,"")}บาท.png`, {type:"image/png"});
   QRCARD.set(k, file); return file;
 }
 function warmQrCards(c){
@@ -3727,7 +3747,7 @@ function warmQrCards(c){
 }
 function cachedCards(c){
   const plan = settlePlan(computeNet(c.tid, c.members).net), out = [];
-  for (const [dn, cn, at] of plan){ const pp = ((userBy(cn)||{}).promptpay||"").trim(); const f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp)); if (f) out.push(f); }
+  for (const [dn, cn, at] of plan){ const f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, payKey(userBy(cn))));  if (f) out.push(f); }
   return out;
 }
 function canShareFiles(files){ try { return !!(navigator.canShare && navigator.share && navigator.canShare({files})); } catch(e){ return false; } }
@@ -3737,17 +3757,18 @@ function copyQuiet(s){ try { navigator.clipboard && navigator.clipboard.writeTex
 Object.assign(ACT, {
   shareQR: el => {
     const c = ctx(), {dn, cn} = el.dataset, at = num(el.dataset.amt), pp = ((userBy(cn)||{}).promptpay||"").trim();
-    const f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp));
-    const u = userBy(cn) || {};
-    const text = `${dn} โอนให้ ${cn} ${fmt(at)} บาท (${c.trip.name})\n` + (pp ? `พร้อมเพย์ ${pp} — สแกน QR ในรูป ยอดเงินขึ้นให้เอง` : `${u.bank_name||"บัญชี"} ${u.bank_account||""}`);
-    if (!f){ makeQrCard(c.trip.name, dn, cn, at).then(x => { if (x){ dlFile(x); flash("บันทึกรูป QR แล้ว"); } }); return "skip"; }
-    if (canShareFiles([f])){ copyQuiet(text); navigator.share({files:[f], text}).catch(e => { if (e.name !== "AbortError"){ dlFile(f); flash("บันทึกรูป QR แล้ว"); } }); }
-    else { dlFile(f); flash("บันทึกรูป QR แล้ว — ส่งรูปนี้เข้า LINE ได้เลย"); }
+    const u = userBy(cn) || {}, f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, payKey(u))), hasQR = !!payTarget(u, at);
+    const text = `${dn} โอนให้ ${cn} ${fmt(at)} บาท (${c.trip.name})\n` + (pp ? `พร้อมเพย์ ${pp} — สแกน QR ในรูป ยอดเงินขึ้นให้เอง` : `${u.bank_name||"บัญชี"} ${u.bank_account||""}${hasQR?" — สแกน QR ในรูป ยอดเงินขึ้นให้เอง":""}`);
+    const saved = hasQR ? "บันทึกรูป QR แล้ว" : "บันทึกรูปยอดโอนแล้ว";
+    if (!f){ makeQrCard(c.trip.name, dn, cn, at).then(x => { if (x){ dlFile(x); flash(saved); } }); return "skip"; }
+    if (canShareFiles([f])){ copyQuiet(text); navigator.share({files:[f], text}).catch(e => { if (e.name !== "AbortError"){ dlFile(f); flash(saved); } }); }
+    else { dlFile(f); flash(saved + " — ส่งรูปนี้เข้า LINE ได้เลย"); }
     return "skip";
   },
   dlQR: el => { const c = ctx(), {dn, cn} = el.dataset, at = num(el.dataset.amt);
-    const pp = ((userBy(cn)||{}).promptpay||"").trim(), f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, pp));
-    if (f){ dlFile(f); flash("บันทึกรูป QR แล้ว"); } else makeQrCard(c.trip.name, dn, cn, at).then(x => { if (x){ dlFile(x); flash("บันทึกรูป QR แล้ว"); } });
+    const u = userBy(cn) || {}, f = QRCARD.get(cardKey(c.trip.name, dn, cn, at, payKey(u)));
+    const saved = payTarget(u, at) ? "บันทึกรูป QR แล้ว" : "บันทึกรูปยอดโอนแล้ว";
+    if (f){ dlFile(f); flash(saved); } else makeQrCard(c.trip.name, dn, cn, at).then(x => { if (x){ dlFile(x); flash(saved); } });
     return "skip"; },
   shareLine: () => {
     const c = ctx(); if (!c.trip) return "skip";
@@ -3759,9 +3780,9 @@ Object.assign(ACT, {
         .catch(e => { if (e.name !== "AbortError") window.open(lineUrl, "_blank"); });
     } else {
       window.open(lineUrl, "_blank");
-      if (!files.length){ const plan = settlePlan(net), miss = [...new Set(plan.map(p => p[1]).filter(n => !((userBy(n)||{}).promptpay)))];
-        if (miss.length) setTimeout(() => flash(`ส่งได้แค่ข้อความ เพราะ ${miss.join(", ")} ยังไม่ได้ใส่พร้อมเพย์`,"warn"), 300); }
-      if (files.length){ files.forEach(dlFile); flash(`บันทึกรูป QR ${files.length} รูปแล้ว แนบในแชท LINE ได้เลย`,"info"); }
+      if (!files.length){ const plan = settlePlan(net), miss = [...new Set(plan.map(p => p[1]).filter(n => { const u = userBy(n)||{}; return !u.promptpay && !u.bank_account; }))];
+        if (miss.length) setTimeout(() => flash(`ส่งได้แค่ข้อความ เพราะ ${miss.join(", ")} ยังไม่ได้ใส่บัญชีรับเงิน`,"warn"), 300); }
+      if (files.length){ files.forEach(dlFile); flash(`บันทึกรูปยอดโอน ${files.length} รูปแล้ว แนบในแชท LINE ได้เลย`,"info"); }
     }
     return "skip";
   },
