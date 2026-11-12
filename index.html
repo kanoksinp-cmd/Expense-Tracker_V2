@@ -3160,7 +3160,7 @@ function vBills(c){
   return h;
 }
 function billForm(c, e){
-  const list = e ? (c.members.includes(e.payer_name) ? c.members : [...c.members, e.payer_name]) : c.members;
+  const list = billList(c, e);
   const payer = e ? e.payer_name : (c.members.includes(c.me) ? c.me : c.members[0]);
   const split = e ? splitList(e.split_members) : list;
   let mode = "equal", vals = {};
@@ -3178,7 +3178,7 @@ function billForm(c, e){
     <div class="fld"><span class="lbl" style="display:flex;justify-content:space-between">ใครร่วมหารบ้าง ${ro?"":`<button type="button" class="btn ghost sm" style="min-height:0;padding:0" data-act="splitAll">เลือกทุกคน</button>`}</span>
       <div class="chips">${list.map(n => `<label class="chip p"><input type="checkbox" name="sp" value="${esc(n)}" ${split.includes(n)?"checked":""} ${ro}>${avatar(n,28,11)} ${esc(n)}<span class="tick">✓</span></label>`).join("")}</div></div>
     <div class="fld"><span class="lbl">วิธีหาร</span><div class="seg sm">${[["equal","เท่ากัน"],["amount","ระบุยอดเอง"],["share","ตามสัดส่วน"]].map(([v,l]) => `<label><input type="radio" name="mode" value="${v}" ${v===mode?"checked":""} ${ro} data-change="splitMode">${l}</label>`).join("")}</div>
-      ${vgrid("amount",0,10)}${vgrid("share",1,1)}<div class="preview" id="preview"></div></div>
+      ${vgrid("amount",0,"0.01")}${vgrid("share",1,"any")}<div class="preview" id="preview"></div></div>
     ${ro ? (e.image_blob?`<button type="button" class="drop" style="width:100%;background:none" data-act="zoom" data-t="expenses" data-id="${e.id}"><span class="ph" style="background-image:url(${e.image_blob})"></span>ดูรูปสลิป</button>`:"") :
       `<div class="fld"><span class="lbl">รูปสลิป</span><label class="drop"><span class="ph" data-ph ${e&&e.image_blob?`style="background-image:url(${e.image_blob})"`:""}>${e&&e.image_blob?"":ic("image")}</span><span data-fn>${e&&e.image_blob?"แตะเพื่อเปลี่ยนรูป":"แตะเพื่อแนบรูป (ไม่บังคับ)"}</span><input type="file" name="slip" accept="image/*" data-change="slipPick"></label>
       ${e&&e.image_blob?`<div class="btns" style="margin-top:8px"><button type="button" class="btn sm" data-act="zoom" data-t="expenses" data-id="${e.id}">ดูรูปเต็ม</button><label class="chk" style="flex:1"><input type="checkbox" name="delimg"> ลบรูปนี้</label></div>`:""}</div>`}
@@ -3186,9 +3186,10 @@ function billForm(c, e){
    ${ro ? "" : `<div class="sheet-f"><div class="btns">${e?`<button type="button" class="btn danger" style="flex:0 0 auto" data-act="delBill" data-id="${e.id}">ลบ</button>`:""}<button class="btn pri" type="submit">${e?"บันทึกการแก้ไข":"บันทึกบิล"}</button></div></div>`}
   </form>`;
 }
+function billList(c, e){ return e ? [...new Set([...c.members, e.payer_name, ...splitList(e.split_members)])] : c.members; }
 function billFormList(f){
   const c = ctx(), e = f.dataset.id ? DB.expenses.find(x => x.id === num(f.dataset.id)) : null;
-  return [c, e, e ? (c.members.includes(e.payer_name) ? c.members : [...c.members, e.payer_name]) : c.members];
+  return [c, e, billList(c, e)];
 }
 function readSplit(f){
   const [c, e, list] = billFormList(f), fd = new FormData(f), mode = fd.get("mode") || "equal", split = fd.getAll("sp");
@@ -3582,6 +3583,9 @@ const FORM = {
     if (!desc) return {err:"ใส่ชื่อรายการ เช่น ข้าวเย็น"};
     if (!split.length) return {err:"เลือกคนร่วมหารอย่างน้อย 1 คน"};
     if (!payer) return {err:"เลือกคนที่จ่ายไปก่อน"};
+    if (detail && JSON.parse(detail).mode === "amount"){ const v = JSON.parse(detail).values, fx = r2(sum(Object.values(v))), allFixed = split.every(n => n in v);
+      if (fx > amt + 0.005) return {err:`ยอดที่ระบุรวม ${fmt(fx)} บาท เกินยอดบิล ${fmt(amt)} บาท`};
+      if (allFixed && Math.abs(fx - amt) > 0.005) return {err:`ยอดที่ระบุรวม ${fmt(fx)} บาท ไม่เท่ากับยอดบิล ${fmt(amt)} บาท`}; }
     let img = e ? e.image_blob : null;
     if (fd.get("delimg")) img = null;
     else if (fd.get("slip") && fd.get("slip").size) { try { img = await readImage(fd.get("slip")); } catch(x){ return {err:x.message}; } }
@@ -3603,7 +3607,7 @@ const FORM = {
   createEv: (f, fd) => {
     const name = fd.get("name").trim(), [ok, err] = validName(name); if (!ok) return {err};
     const date = fd.get("date") || todayStr();
-    if (DB.trips.some(t => t.name === name && t.trip_date === date)) return {err:"มีทริปชื่อนี้ในวันนี้แล้ว"};
+    if (DB.trips.some(t => t.status !== 1 && canSee(t) && t.name === name && t.trip_date === date)) return {err:"มีทริปชื่อนี้ในวันนี้แล้ว"};
     const id = nextId("trips"), src = num(fd.get("src")) || null;
     DB.trips.push({id, name, status:0, trip_date:date, created_by:S.me, place_name:null, lat:null, lon:null, closed_at:null});
     let nm = 0, np = 0;
@@ -3617,7 +3621,7 @@ const FORM = {
   },
   editEv: (f, fd) => { const t = ctx().trip, name = fd.get("name").trim(), [ok, err] = validName(name); if (!ok) return {err};
     const date = fd.get("date") || t.trip_date || todayStr();
-    if (DB.trips.some(x => x.name === name && x.trip_date === date && x.id !== t.id)) return {err:"มีทริปชื่อนี้ในวันนี้แล้ว"};
+    if (DB.trips.some(x => x.status !== 1 && canSee(x) && x.name === name && x.trip_date === date && x.id !== t.id)) return {err:"มีทริปชื่อนี้ในวันนี้แล้ว"};
     Object.assign(t, {name, trip_date:date}); return {ok:"บันทึกแล้ว"}; },
   reply: (f, fd, sub) => { const c = ctx(), like = sub && sub.name === "like", msg = like ? "👍" : fd.get("msg").trim(); if (!msg) return null;
     notify(c.tid, S.chat_partner, msg, c.me, 0); setTimeout(() => { const b = document.getElementById("replyBox"); if (b && !like) b.focus(); }); return {ok:""}; },
@@ -3958,10 +3962,10 @@ async function pull(){
     for (const k of PENDING){ const [t, , row] = findRow(k); if (row) nd[t].push(row); }   // ของที่ยังไม่ได้ส่ง ใช้ของในเครื่อง
     SYNC_TABLES.forEach(t => nd[t].sort((a,b) => a.id - b.id));
     SYNCED.clear(); for (const [k, d] of cloud) SYNCED.set(k, JSON.stringify(d));
-    DB = nd; lsSet(KEY, JSON.stringify(DB)); READY = true; setSync("ok");
-    pushPending(); remoteRender(true);
+    const first = !READY; DB = nd; lsSet(KEY, JSON.stringify(DB)); READY = true; setSync("ok");
+    pushPending(); remoteRender(first);
   } catch(e){
-    console.warn("pull failed", e); setSync(isNetErr(e) ? "offline" : "error"); remoteRender(true); retryLater(pull);
+    console.warn("pull failed", e); setSync(isNetErr(e) ? "offline" : "error"); remoteRender(!READY); retryLater(pull);
   }
 }
 function applyRemote(p){
