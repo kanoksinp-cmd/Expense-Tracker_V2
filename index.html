@@ -3602,9 +3602,10 @@ const FORM = {
     Object.assign(ctx().trip, {place_name:fd.get("pn").trim()||null, lat:la, lon:lo}); UI.open.delete("campedit"); return {ok:"บันทึกจุดกางเต็นท์แล้ว"}; },
   createEv: (f, fd) => {
     const name = fd.get("name").trim(), [ok, err] = validName(name); if (!ok) return {err};
-    if (DB.trips.some(t => t.name === name)) return {err:"มีทริปชื่อนี้แล้ว"};
+    const date = fd.get("date") || todayStr();
+    if (DB.trips.some(t => t.name === name && t.trip_date === date)) return {err:"มีทริปชื่อนี้ในวันนี้แล้ว"};
     const id = nextId("trips"), src = num(fd.get("src")) || null;
-    DB.trips.push({id, name, status:0, trip_date:fd.get("date")||todayStr(), created_by:S.me, place_name:null, lat:null, lon:null, closed_at:null});
+    DB.trips.push({id, name, status:0, trip_date:date, created_by:S.me, place_name:null, lat:null, lon:null, closed_at:null});
     let nm = 0, np = 0;
     if (src){
       if (fd.get("cpm")) DB.members.filter(m => m.trip_id === src).forEach(m => { DB.members.push({id:nextId("members"), trip_id:id, name:m.name}); nm++; });
@@ -3615,8 +3616,9 @@ const FORM = {
     return {ok:`สร้าง “${name}” แล้ว` + (src ? ` คัดลอกเพื่อน ${nm} คน ของ ${np} ชิ้น` : " ต่อไปเพิ่มเพื่อนเข้าทริป")};
   },
   editEv: (f, fd) => { const t = ctx().trip, name = fd.get("name").trim(), [ok, err] = validName(name); if (!ok) return {err};
-    if (DB.trips.some(x => x.name === name && x.id !== t.id)) return {err:"มีทริปชื่อนี้แล้ว"};
-    Object.assign(t, {name, trip_date:fd.get("date")}); return {ok:"บันทึกแล้ว"}; },
+    const date = fd.get("date") || t.trip_date || todayStr();
+    if (DB.trips.some(x => x.name === name && x.trip_date === date && x.id !== t.id)) return {err:"มีทริปชื่อนี้ในวันนี้แล้ว"};
+    Object.assign(t, {name, trip_date:date}); return {ok:"บันทึกแล้ว"}; },
   reply: (f, fd, sub) => { const c = ctx(), like = sub && sub.name === "like", msg = like ? "👍" : fd.get("msg").trim(); if (!msg) return null;
     notify(c.tid, S.chat_partner, msg, c.me, 0); setTimeout(() => { const b = document.getElementById("replyBox"); if (b && !like) b.focus(); }); return {ok:""}; },
   login: async (f, fd) => {
