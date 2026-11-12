@@ -2813,9 +2813,49 @@ function bankPayload(bankName, acct, amount){
 function payTarget(u, amount){
   u = u || {}; const pp = (u.promptpay||"").trim();
   if (pp){ const p = ppPayload(pp, amount); if (p) return {payload:p, kind:"pp"}; }
-  const b = bankPayload(u.bank_name, u.bank_account, amount); return b ? {payload:b, kind:"bank"} : null;
+  if (u.pay_qr){ const q = qrWithAmount(u.pay_qr, amount); if (q) return {payload:q, kind:"bank"}; }
+  return null;   // ไม่สร้าง QR จากเลขบัญชีเอง (Thai QR ช่อง 04) เพราะแอปธนาคารส่วนใหญ่สแกนไม่ได้
 }
-const payKey = u => [(u||{}).promptpay||"", (u||{}).bank_name||"", (u||{}).bank_account||""].join("~");
+const payKey = u => [(u||{}).promptpay||"", (u||{}).bank_name||"", (u||{}).bank_account||"", (u||{}).pay_qr||""].join("~");
+/* QR รับเงินที่ธนาคารสร้างให้ (อัปโหลดรูปมา) → อ่านเป็นข้อความ Thai QR แล้วใส่ยอดเงินเข้าไปใหม่ */
+function emvParse(s){
+  s = String(s||"").trim();
+  if (!/^000201/.test(s) || s.slice(-8,-4) !== "6304" || ppCrc(s.slice(0,-4)) !== s.slice(-4).toUpperCase()) return null;
+  const out = []; let i = 0;
+  while (i < s.length){ const id = s.substr(i,2), n = parseInt(s.substr(i+2,2),10); if (!/^\d\d$/.test(id) || isNaN(n) || i+4+n > s.length) return null; out.push([id, s.substr(i+4,n)]); i += 4+n; }
+  const m = Object.fromEntries(out);
+  if (!m["29"] && !m["30"]) return null;          // ต้องเป็น QR โอนเงิน (พร้อมเพย์/บิลเพย์เมนต์)
+  if (m["53"] && m["53"] !== "764") return null;  // ต้องเป็นเงินบาท
+  return out;
+}
+function qrWithAmount(s, amount){
+  const tl = emvParse(s); if (!tl) return null;
+  const m = new Map(tl.filter(([k]) => k !== "63"));
+  if (amount){ m.set("01","12"); m.set("54", Number(amount).toFixed(2)); }
+  const p = [...m.keys()].sort().map(k => tlv(k, m.get(k))).join("") + "6304";
+  return p + ppCrc(p);
+}
+let JSQR_P = null;
+function loadJsQR(){
+  if (window.jsQR) return Promise.resolve();
+  return JSQR_P = JSQR_P || new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+    sc.onload = res; sc.onerror = () => { JSQR_P = null; sc.remove(); rej(new Error("โหลดตัวอ่าน QR ไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่")); }; document.head.appendChild(sc); });
+}
+async function decodeThaiQr(file){
+  if (file.size > MAX_UPLOAD_MB*1024*1024) throw new Error(`ไฟล์ใหญ่เกิน ${MAX_UPLOAD_MB} MB`);
+  const img = await new Promise((res, rej) => { const i = new Image(), url = URL.createObjectURL(file);
+    i.onload = () => { URL.revokeObjectURL(url); res(i); }; i.onerror = () => { URL.revokeObjectURL(url); rej(new Error("อ่านไฟล์รูปไม่ได้")); }; i.src = url; });
+  const k = Math.min(1, 1400/Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth*k); c.height = Math.round(img.naturalHeight*k);
+  const x = c.getContext("2d", {willReadFrequently:true}); x.fillStyle = "#fff"; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+  let txt = null;
+  if ("BarcodeDetector" in window){ try { const r = await new BarcodeDetector({formats:["qr_code"]}).detect(c); if (r && r[0]) txt = r[0].rawValue; } catch(e){} }
+  if (!txt){ await loadJsQR(); const d = x.getImageData(0,0,c.width,c.height); const r = window.jsQR(d.data, c.width, c.height, {inversionAttempts:"attemptBoth"}); if (r) txt = r.data; }
+  if (!txt) throw new Error("หา QR ในรูปไม่เจอ ลองแคปหน้าจอให้เห็น QR ชัด ๆ แล้วเลือกใหม่");
+  txt = txt.trim();
+  if (!emvParse(txt)) throw new Error("QR นี้ไม่ใช่ QR รับเงินแบบพร้อมเพย์/Thai QR ใช้เมนู “QR รับเงิน” ในแอปธนาคาร");
+  return txt;
+}
 const QR_CACHE = {};
 function qrCanvas(text, box=8, border=3, color="#000"){
   const q = qrcode(0, "M"); q.addData(text); q.make();
@@ -3118,10 +3158,13 @@ function vSummary(c, net, exps){
     let info = "";
     if (pp) info += `<div class="acct"><div class="g">พร้อมเพย์ ${esc(cn)}<b>${esc(pp)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(pp)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
     else if (ba) info += `<div class="acct"><div class="g">${esc(bn||"บัญชีธนาคาร")}<b>${esc(ba)}</b></div><button class="btn sm" data-act="copy" data-v="${esc(ba)}" aria-label="คัดลอก">${ic("copy")}</button></div>`;
-    if (!pp && !ba) info += cn === me
+    if (!pp && !ba && !u.pay_qr) info += cn === me
       ? `<div class="notice" style="margin-bottom:8px">💳<div style="flex:1">คุณยังไม่ได้ใส่บัญชีรับเงิน ใส่พร้อมเพย์แล้วแอปจะสร้างรูป QR พร้อมยอดเงินให้เพื่อนสแกนจ่ายได้ทันที</div><button class="btn sm pri" data-act="goPP">ใส่บัญชี</button></div>`
       : `<div class="notice" style="margin-bottom:8px">💳<div>${esc(cn)} ยังไม่ได้ใส่บัญชีรับเงิน ถามเลขบัญชีจาก ${esc(cn)} หรือบอกให้ใส่ที่หน้าโปรไฟล์</div></div>`;
-    if (!pp && ba && !qr) info += `<div class="notice" style="margin-bottom:8px">💳<div>สร้าง QR จากเลขบัญชีนี้ไม่ได้ เพราะ${bankCode(bn)?"เลขบัญชีไม่ถูกต้อง":"ยังไม่ได้เลือกธนาคาร"} โอนตามเลขบัญชีด้านบนได้เลย</div></div>
+    if (!pp && ba && !qr) info += cn === me
+      ? `<div class="notice" style="margin-bottom:8px">💳<div style="flex:1">เพื่อนต้องพิมพ์เลขบัญชีโอนเอง ใส่พร้อมเพย์ หรืออัปโหลดรูป QR รับเงินจากแอปธนาคาร แล้วเพื่อนจะสแกนจ่ายพร้อมยอดได้ทันที</div><button class="btn sm pri" data-act="goPP">ตั้งค่า</button></div>`
+      : `<div class="notice" style="margin-bottom:8px">💳<div>${esc(cn)} ยังไม่มีพร้อมเพย์ กดคัดลอกเลขบัญชีด้านบน แล้วเปิดแอปธนาคารเลือกโอนเข้าบัญชี${esc(bn)?` ${esc(bn)}`:""}</div></div>`;
+    if (!pp && ba && !qr) info += `
       <div class="btns" style="margin-bottom:8px"><button class="btn sm" data-act="shareQR" data-dn="${esc(dn)}" data-cn="${esc(cn)}" data-amt="${at}">${ic("share")} แชร์รูปยอดโอน</button></div>`;
     if (mine){
       info += `<label class="drop" style="margin:4px 0 8px;padding:8px 10px"><span class="ph" style="width:38px;height:38px" data-ph>${ic("image")}</span><span data-fn>แนบสลิปการโอน (ไม่บังคับ)</span><input type="file" id="paySlip_${i}" accept="image/*" data-change="slipPick"></label>
@@ -3425,11 +3468,15 @@ function vLogin(){
 }
 function vAccount(c){
   const u = userBy(c.me);
-  let h = `<div class="panel" style="display:flex;align-items:center;gap:14px;margin-top:6px">${avatar(c.me,60,24)}<div style="flex:1;min-width:0"><div style="font-family:var(--disp);font-weight:700;font-size:20px">${esc(c.me)}</div><div class="muted" style="font-size:13px">${u.promptpay?`พร้อมเพย์ ${esc(u.promptpay)}`:"ยังไม่ได้ใส่บัญชีรับเงิน"}</div></div></div>`;
+  let h = `<div class="panel" style="display:flex;align-items:center;gap:14px;margin-top:6px">${avatar(c.me,60,24)}<div style="flex:1;min-width:0"><div style="font-family:var(--disp);font-weight:700;font-size:20px">${esc(c.me)}</div><div class="muted" style="font-size:13px">${u.promptpay?`พร้อมเพย์ ${esc(u.promptpay)}`:u.pay_qr?"รับเงินผ่าน QR จากแอปธนาคาร":u.bank_account?`${esc(u.bank_name||"บัญชี")} ${esc(u.bank_account)}`:"ยังไม่ได้ใส่บัญชีรับเงิน"}</div></div></div>`;
   h += `<h2>บัญชีรับเงิน</h2><form class="panel" data-form="bank"><div class="fld"><span class="lbl">พร้อมเพย์</span><input type="text" name="pp" inputmode="numeric" value="${esc(u.promptpay||"")}" placeholder="เบอร์มือถือ หรือเลขบัตร 13 หลัก"></div>
     <div class="two"><div class="fld"><span class="lbl">ธนาคาร</span><select name="bn">${BANK_LIST.map(b => opt(b, u.bank_name||BANK_LIST[0], b===BANK_LIST[0]?"ไม่ระบุ":b)).join("")}</select></div>
     <div class="fld"><span class="lbl">เลขบัญชี</span><input type="text" name="ba" inputmode="numeric" value="${esc(u.bank_account||"")}"></div></div>
-    <button class="btn pri full" type="submit">บันทึกบัญชีรับเงิน</button><div class="hint">เพื่อนจะเห็น QR พร้อมเพย์พร้อมยอดเงินตอนต้องโอนให้คุณ</div></form>`;
+    <div class="fld"><span class="lbl">QR รับเงินจากแอปธนาคาร <span class="muted" style="font-weight:400">(ถ้าไม่มีพร้อมเพย์)</span></span>
+      <label class="drop"><span class="ph" data-ph ${u.pay_qr?`style="background-image:url(${qrCanvas(u.pay_qr,4,2).toDataURL("image/png")});background-size:contain;background-repeat:no-repeat;background-color:#fff"`:""}>${u.pay_qr?"":ic("image")}</span><span data-fn>${u.pay_qr?"มี QR รับเงินแล้ว · แตะเพื่อเปลี่ยนรูป":"แตะเพื่อเลือกรูป QR รับเงิน"}</span><input type="file" name="qrimg" accept="image/*" data-change="slipPick"></label>
+      ${u.pay_qr?`<label class="chk"><input type="checkbox" name="delqr"> ลบ QR รับเงินนี้</label>`:""}
+      <div class="hint">เปิดแอปธนาคาร → เมนู “รับเงิน” หรือ “QR รับเงิน” → บันทึกรูปหรือแคปหน้าจอ แล้วเลือกรูปนั้นที่นี่ ตอนเพื่อนโอน แอปจะใส่ยอดเงินใน QR ให้เอง</div></div>
+    <button class="btn pri full" type="submit">บันทึกบัญชีรับเงิน</button><div class="hint">มีพร้อมเพย์ใช้พร้อมเพย์ก่อน ไม่มีก็ใช้ QR รับเงินจากธนาคาร ถ้ามีแค่เลขบัญชี เพื่อนต้องพิมพ์เลขบัญชีโอนเอง</div></form>`;
   h += more("prof", "👤 แก้ไขชื่อและรูปโปรไฟล์", `<form class="panel" data-form="profile"><div class="fld"><span class="lbl">ชื่อที่แสดง</span><input type="text" name="name" maxlength="${NAME_MAXLEN}" value="${esc(c.me)}"><div class="hint">เปลี่ยนแล้ว บิล แชท และยอดเงินเดิมจะตามไปด้วย</div></div>
     <div class="fld"><label class="drop"><span class="ph" data-ph ${u.avatar_blob?`style="background-image:url(${u.avatar_blob});border-radius:50%"`:`style="border-radius:50%"`}>${u.avatar_blob?"":ic("image")}</span><span data-fn>แตะเพื่อเลือกรูปโปรไฟล์</span><input type="file" name="pic" accept="image/*" data-change="slipPick"></label></div>
     ${u.avatar_blob?`<label class="chk"><input type="checkbox" name="delpic"> ลบรูปโปรไฟล์</label>`:""}<button class="btn pri full" type="submit">บันทึกโปรไฟล์</button></form>`);
@@ -3663,9 +3710,13 @@ const FORM = {
     if (fd.get("delpic")) u.avatar_blob = null; else if (pic) u.avatar_blob = pic;
     UI.open.delete("prof"); return {ok:"บันทึกโปรไฟล์แล้ว"};
   },
-  bank: (f, fd) => { const u = userBy(S.me), pp = fd.get("pp").trim();
+  bank: async (f, fd) => { const u = userBy(S.me), pp = fd.get("pp").trim();
     if (pp && !ppTarget(pp)[0]) return {err:"เบอร์พร้อมเพย์ไม่ถูกรูปแบบ ใช้เบอร์มือถือ 10 หลัก หรือเลขบัตร 13 หลัก"};
-    Object.assign(u, {promptpay:pp, bank_name:fd.get("bn")===BANK_LIST[0]?"":fd.get("bn"), bank_account:fd.get("ba").trim()}); return {ok:"บันทึกบัญชีรับเงินแล้ว"}; },
+    let pq = u.pay_qr || null, qf = fd.get("qrimg");
+    if (fd.get("delqr")) pq = null;
+    else if (qf && qf.size){ try { pq = await decodeThaiQr(qf); } catch(e){ return {err:e.message}; } }
+    Object.assign(u, {promptpay:pp, bank_name:fd.get("bn")===BANK_LIST[0]?"":fd.get("bn"), bank_account:fd.get("ba").trim(), pay_qr:pq});
+    return {ok: qf && qf.size && pq ? "บันทึกแล้ว อ่าน QR รับเงินได้ เพื่อนสแกนจ่ายพร้อมยอดได้เลย" : "บันทึกบัญชีรับเงินแล้ว"}; },
   chgPin: async (f, fd) => {
     const u = userBy(S.me), p1 = fd.get("p1"), p2 = fd.get("p2");
     try {
@@ -3886,7 +3937,7 @@ Object.assign(ACT, {
         .catch(e => { if (e.name !== "AbortError") window.open(lineUrl, "_blank"); });
     } else {
       window.open(lineUrl, "_blank");
-      if (!files.length){ const plan = settlePlan(net), miss = [...new Set(plan.map(p => p[1]).filter(n => { const u = userBy(n)||{}; return !u.promptpay && !u.bank_account; }))];
+      if (!files.length){ const plan = settlePlan(net), miss = [...new Set(plan.map(p => p[1]).filter(n => { const u = userBy(n)||{}; return !u.promptpay && !u.bank_account && !u.pay_qr; }))];
         if (miss.length) setTimeout(() => flash(`ส่งได้แค่ข้อความ เพราะ ${miss.join(", ")} ยังไม่ได้ใส่บัญชีรับเงิน`,"warn"), 300); }
       if (files.length){ files.forEach(dlFile); flash(`บันทึกรูปยอดโอน ${files.length} รูปแล้ว แนบในแชท LINE ได้เลย`,"info"); }
     }
