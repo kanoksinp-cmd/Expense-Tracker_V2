@@ -77,7 +77,9 @@ main.wrap{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .pass{position:relative;color:#fff;border-radius:22px;margin:6px 0 16px;background:var(--pass);box-shadow:var(--sh2);overflow:hidden;isolation:isolate}
 .pass::before{content:"";position:absolute;inset:0;z-index:-1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='260'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='.08' transform='rotate(-12 330 50)'%3E%3Cellipse cx='330' cy='50' rx='46' ry='26'/%3E%3Cellipse cx='330' cy='50' rx='84' ry='50'/%3E%3Cellipse cx='330' cy='50' rx='126' ry='76'/%3E%3Cellipse cx='330' cy='50' rx='170' ry='104'/%3E%3Cellipse cx='330' cy='50' rx='218' ry='134'/%3E%3Cellipse cx='330' cy='50' rx='270' ry='166'/%3E%3C/g%3E%3C/svg%3E") top right/420px no-repeat}
 .pass-top{padding:20px 22px 18px}
-.pass-name{font-family:var(--disp);font-weight:700;font-size:26px;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}
+.pass-name{font-family:var(--disp);font-weight:700;font-size:26px;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere;padding-right:46px}
+.pass-gear{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.13);color:#fff;display:grid;place-items:center}
+.pass-gear:hover{background:rgba(255,255,255,.22)}
 .pass-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:rgba(255,255,255,.72)}
 .pass-stack{display:flex;margin-top:14px}
 .pass-stack .av{box-shadow:0 0 0 2.5px var(--pass);margin-right:-8px}
@@ -92,7 +94,7 @@ main.wrap{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .pass-side{text-align:right;font-size:12.5px;color:rgba(255,255,255,.68)}
 .pass-side b{display:block;font-family:var(--disp);font-size:17px;color:#fff;font-weight:600}
 .a-owe{color:#FF9D8F}.a-get{color:#7EF0C0}.a-even{color:#fff}
-.pass.closed .pass-top::after{content:"ปิดทริปแล้ว";position:absolute;top:18px;right:18px;font-size:11.5px;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.4);color:rgba(255,255,255,.85)}
+.pass.closed .pass-top::after{content:"🔒 ปิดทริปแล้ว";display:inline-block;margin-top:10px;font-size:11.5px;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.4);color:rgba(255,255,255,.85)}
 
 /* ── segmented / tabs ── */
 .seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;margin-bottom:16px}
@@ -2836,7 +2838,7 @@ const CATEGORIES = [["อาหาร","🍜","#ea580c"],["ที่พัก","
 const CAT_NAMES = CATEGORIES.map(c=>c[0]), CAT_ICON = Object.fromEntries(CATEGORIES.map(c=>[c[0],c[1]])), CAT_COLOR = Object.fromEntries(CATEGORIES.map(c=>[c[0],c[2]]));
 const catOf = e => CAT_NAMES.includes(e.category) ? e.category : "อื่น ๆ";
 const WMO = {0:["☀️","แดดจัด"],1:["🌤️","แดดบางส่วน"],2:["⛅","มีเมฆบางส่วน"],3:["☁️","เมฆมาก"],45:["🌫️","หมอก"],48:["🌫️","หมอกน้ำแข็ง"],51:["🌦️","ฝนปรอยเบา"],53:["🌦️","ฝนปรอย"],55:["🌦️","ฝนปรอยหนัก"],61:["🌧️","ฝนเบา"],63:["🌧️","ฝนปานกลาง"],65:["🌧️","ฝนหนัก"],71:["🌨️","หิมะเบา"],73:["🌨️","หิมะ"],75:["🌨️","หิมะหนัก"],80:["🌦️","ฝนซู่เบา"],81:["🌧️","ฝนซู่"],82:["⛈️","ฝนซู่หนัก"],95:["⛈️","พายุฝนฟ้าคะนอง"],96:["⛈️","พายุลูกเห็บ"],99:["⛈️","พายุลูกเห็บหนัก"]};
-const BACKUP_TAB = 4;
+const BACKUP_TAB = 2;
 
 /* ═══════════════ ONLINE (ระหว่างแท็บ/หน้าต่างในเครื่องเดียวกัน) ═══════════════ */
 function onlineMap(){ try { return JSON.parse(lsGet(OKEY)) || {}; } catch(e){ return {}; } }
@@ -3001,6 +3003,7 @@ const IC = {
   share:'<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"/>',
   bell:'<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
   check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  cog:'<path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/>',
 };
 const ic = (n, cls="") => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
 
@@ -3021,7 +3024,7 @@ function seg(key, labels, cls=""){
   return [cur, `<div class="seg ${cls}" role="tablist">${labels.map((l,i) => `<button role="tab" aria-selected="${i===cur}" data-act="tab" data-k="${key}" data-i="${i}" class="${i===cur?"act":""}">${l}</button>`).join("")}</div>`];
 }
 const emptyState = (icon, title, sub, btn, act) => `<div class="empty"><div class="e">${icon}</div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}</div>${btn?`<button class="btn pri" ${act}>${btn}</button>`:""}</div>`;
-const lockedNotice = c => c ? `<div class="notice">🔒<div>ทริปนี้ปิดแล้ว ดูย้อนหลังได้อย่างเดียว ถ้าต้องแก้ไข เปิดทริปอีกครั้งได้ที่ จัดการ → ทริป</div></div>` : "";
+const lockedNotice = c => c ? `<div class="notice">🔒<div>ทริปนี้ปิดแล้ว ดูย้อนหลังได้อย่างเดียว ถ้าต้องแก้ไข กดปุ่ม ⚙ ที่การ์ดทริปแล้วเลือก “เปิดอีกครั้ง”</div></div>` : "";
 const opt = (v, sel, label) => `<option value="${esc(v)}" ${v===sel?"selected":""}>${esc(label ?? v)}</option>`;
 const more = (key, summary, inner) => `<details class="more" data-key="${key}" ${UI.open.has(key)?"open":""}><summary>${summary}${ic("chev")}</summary><div class="in">${inner}</div></details>`;
 const catTile = cat => `<div class="cat-ico" style="background-color:color-mix(in srgb,${CAT_COLOR[cat]} 16%,transparent)">${CAT_ICON[cat]}</div>`;
@@ -3040,7 +3043,7 @@ function vTop(c){
     <button class="trip-sw" data-act="sheet" data-s="trips" aria-label="สลับทริป"><span class="logo" aria-hidden="true"></span><span class="t">
       <span class="k">${c.trip ? (c.trip.trip_date ? thDate(c.trip.trip_date) : "ทริปของคุณ") : "Trip Splitter"}</span>
       <span class="n"><span>${esc(c.trip ? c.trip.name : "เลือกทริป")}</span>${ic("chev")}</span></span></button>
-    <button class="icon-btn" data-act="menu" data-k="chat" aria-label="แจ้งเตือน">${ic("bell")}${c.unread?`<span class="dot">${c.unread}</span>`:""}</button>
+    <button class="icon-btn" data-act="menu" data-k="chat" aria-label="แชทและแจ้งเตือน" ${S.menu==="chat"?`style="color:var(--pine);box-shadow:inset 0 0 0 2px var(--pine)"`:""}>${ic("bell")}${c.unread?`<span class="dot">${c.unread}</span>`:""}</button>
     <button class="me-btn" data-act="menu" data-k="account" aria-label="โปรไฟล์">${avatar(c.me,38,15)}</button>
   </div></header>`;
 }
@@ -3048,7 +3051,7 @@ function vNav(c){
   const it = (k, icon, label) => `<button class="bn ${S.menu===k?"act":""}" data-act="menu" data-k="${k}">${ic(icon)}${label}${k==="chat"&&c.unread?`<span class="dot">${c.unread}</span>`:""}</button>`;
   return `<nav class="bnav"><div class="bnav-in">${it("home","home","ทริป")}${it("bills","receipt","บิล")}
     <div><button class="fab" data-act="addBill" aria-label="เพิ่มบิล" ${c.trip&&!c.closed?"":"disabled"}>${ic("plus")}</button></div>
-    ${it("chat","chat","แชท")}${it("manage","grid","จัดการ")}</div></nav>`;
+    ${it("pay","wallet","โอนเงิน")}${it("manage","grid","เพิ่มเติม")}</div></nav>`;
 }
 
 /* ═══════════════ HOME ═══════════════ */
@@ -3057,24 +3060,24 @@ function vHome(c){
   const {net, exps} = computeNet(c.tid, c.members), my = net[c.me] || 0, tot = sum(exps.map(e => e.amount));
   const [lbl, cls] = my < -0.01 ? ["คุณต้องจ่าย","a-owe"] : my > 0.01 ? ["คุณจะได้คืน","a-get"] : ["คุณเคลียร์หมดแล้ว","a-even"];
   const stack = c.members.slice(0,6).map(m => avatar(m,30,12)).join("") + (c.members.length>6?`<span class="more">+${c.members.length-6}</span>`:"");
-  let h = `<section class="pass ${c.closed?"closed":""}"><div class="pass-top"><h1 class="pass-name">${esc(c.trip.name)}</h1>
+  let h = `<section class="pass ${c.closed?"closed":""}"><button class="pass-gear" data-act="sheet" data-s="tripset" aria-label="ตั้งค่าทริป">${ic("cog")}</button><div class="pass-top"><h1 class="pass-name">${esc(c.trip.name)}</h1>
     <div class="pass-meta">${c.trip.trip_date?`<span>📅 ${thDate(c.trip.trip_date)}</span>`:""}<span>👥 ${c.members.length} คน</span><span>🧾 ${exps.length} บิล</span>${c.trip.place_name?`<span>📍 ${esc(c.trip.place_name)}</span>`:""}</div>
     ${c.members.length?`<div class="pass-stack">${stack}</div>`:""}</div><div class="pass-cut"></div>
     <div class="pass-bot"><div><div class="pass-lbl">${lbl}</div><div class="pass-amt ${cls}">${fmt(Math.abs(my))}<small>บาท</small></div></div>
     <div class="pass-side">ทั้งทริปใช้ไป<b>${fmt0(tot)} บาท</b></div></div></section>`;
-  const [t, bar] = seg("home2", ["ภาพรวม","โอนเงิน","สัมภาระ","แคมป์"]);
-  return h + bar + [vOverview, vSummary, vPacking, vCamp][t](c, net, exps);
+  const [t, bar] = seg("home2", ["ภาพรวม","เพื่อน","สัมภาระ","แคมป์"]);
+  return h + bar + [vOverview, vMembers, vPacking, vCamp][t](c, net, exps);
 }
 function vOverview(c, net, exps){
   let h = lockedNotice(c.closed);
-  if (!c.members.length) return h + emptyState("👥","ยังไม่มีเพื่อนในทริปนี้","เพิ่มเพื่อนเข้าทริปก่อน แล้วค่อยเริ่มบันทึกบิล","เพิ่มเพื่อน",`data-act="goto" data-menu="manage" data-tk="manage" data-ti="1"`);
+  if (!c.members.length) return h + emptyState("👥","ยังไม่มีเพื่อนในทริปนี้","เพิ่มเพื่อนเข้าทริปก่อน แล้วค่อยเริ่มบันทึกบิล","เพิ่มเพื่อน",`data-act="tab" data-k="home2" data-i="1"`);
   h += `<div class="quick"><button data-act="addBill" ${c.closed?"disabled":""}><span class="qi">${ic("plus")}</span>เพิ่มบิล</button>
-    <button data-act="tab" data-k="home2" data-i="1"><span class="qi">${ic("wallet")}</span>โอนเงิน</button>
+    <button data-act="menu" data-k="pay"><span class="qi">${ic("wallet")}</span>โอนเงิน</button>
     <button data-act="shareLine"><span class="qi" style="background:color-mix(in srgb,#06C755 16%,transparent);color:#06C755">${ic("share")}</span>แชร์ LINE</button></div>`;
   const mine = settlePlan(net).filter(([d,cr]) => d === c.me || cr === c.me);
   if (mine.length){
     h += `<h2>รายการของคุณ</h2><div class="list">` + mine.map(([d,cr,a]) => { const out = d === c.me, o = out ? cr : d;
-      return `<button class="it" data-act="tab" data-k="home2" data-i="1">${avatar(o,40,15)}<div class="g"><div class="t1">${out?`โอนให้ ${esc(o)}`:`${esc(o)} ต้องโอนให้คุณ`}</div><div class="t2">${out?(payTarget(userBy(o), a)?"แตะเพื่อดู QR โอนเงิน":"แตะเพื่อดูเลขบัญชี"):"แตะเพื่อดูหรือส่งข้อความทวง"}</div></div><div class="amt" style="color:${out?"var(--owe)":"var(--get)"}">${fmt(a)}</div></button>`; }).join("") + `</div>`;
+      return `<button class="it" data-act="menu" data-k="pay">${avatar(o,40,15)}<div class="g"><div class="t1">${out?`โอนให้ ${esc(o)}`:`${esc(o)} ต้องโอนให้คุณ`}</div><div class="t2">${out?(payTarget(userBy(o), a)?"แตะเพื่อดู QR โอนเงิน":"แตะเพื่อดูเลขบัญชี"):"แตะเพื่อดูหรือส่งข้อความทวง"}</div></div><div class="amt" style="color:${out?"var(--owe)":"var(--get)"}">${fmt(a)}</div></button>`; }).join("") + `</div>`;
   }
   if (!exps.length) return h + emptyState("🧾","ยังไม่มีบิล","กดปุ่ม + ด้านล่างเพื่อบันทึกบิลแรก ระบบจะคำนวณให้เองว่าใครต้องโอนให้ใคร");
   const recent = [...exps].sort((a,b) => b.id-a.id).slice(0,4);
@@ -3138,6 +3141,15 @@ function vSummary(c, net, exps){
   const lm = lineText(c, net, exps);
   h += more("line", "📲 ข้อความสรุปสำหรับแชร์", `<textarea readonly rows="9">${esc(lm)}</textarea><div class="btns" style="margin-top:10px"><button class="btn" data-act="copy" data-v="${esc(lm)}">${ic("copy")} คัดลอก</button><a class="btn" target="_blank" rel="noopener" href="https://line.me/R/msg/text/?${encodeURIComponent(lm)}">ส่งแค่ข้อความ</a></div>`);
   return h;
+}
+
+function vPay(c){
+  const [t, bar] = seg("pay", ["ทริปนี้","รวมทุกทริป"], "sm");
+  const h = `<h2 style="margin-top:6px">โอนเงิน${c.trip && t === 0 ? ` <small>${esc(c.trip.name)}</small>` : ""}</h2>` + bar;
+  if (t === 1) return h + vCross(c);
+  if (!c.trip) return h + emptyState("💸","ยังไม่ได้เลือกทริป","เลือกทริปก่อน แล้วแผนโอนเงินจะขึ้นที่นี่","เลือกทริป",`data-act="sheet" data-s="trips"`);
+  const {net, exps} = computeNet(c.tid, c.members);
+  return h + vSummary(c, net, exps);
 }
 
 /* ═══════════════ BILLS PAGE + FORM ═══════════════ */
@@ -3283,31 +3295,31 @@ function wxHtml(lat, lon){
 
 /* ═══════════════ MANAGE ═══════════════ */
 function vManage(c){
-  const [t, bar] = seg("manage", ["ทริป","เพื่อน","ยอดรวม","ถังขยะ","สำรอง"], "sm");
-  let h = `<h2 style="margin-top:6px">จัดการ</h2>` + bar;
+  const [t, bar] = seg("manage", ["สร้างทริป","ถังขยะ","สำรองข้อมูล"], "sm");
+  let h = `<h2 style="margin-top:6px">เพิ่มเติม</h2>` + bar;
   if (!c.me && t !== BACKUP_TAB) return h + emptyState("🔒","ต้องเข้าสู่ระบบก่อน","แท็บสำรองใช้ได้โดยไม่ต้องเข้าสู่ระบบ","เข้าสู่ระบบ",`data-act="menu" data-k="account"`);
-  return h + [vEvents, vMembers, vCross, vTrash, vBackup][t](c);
+  return h + [vNewTrip, vTrash, vBackup][t](c);
 }
-function vEvents(c){
-  let h = "";
-  if (c.trip){
-    const t = c.trip;
-    h += `<div class="panel"><form data-form="editEv"><div class="fld"><span class="lbl">ชื่อทริป</span><input type="text" name="name" maxlength="${NAME_MAXLEN}" value="${esc(t.name)}"></div>
-      <div class="fld"><span class="lbl">วันที่</span><input type="date" name="date" value="${esc(t.trip_date||todayStr())}"></div><button class="btn pri full" type="submit">บันทึก</button></form></div>`;
-    const left = c.closed ? 0 : Object.values(computeNet(c.tid,c.members).net).filter(v => Math.abs(v) > 0.01).length;
-    h += `<div class="list"><div class="it"><div class="g"><div class="t1">${c.closed?"🔒 ทริปปิดแล้ว":"ปิดทริป"}</div><div class="t2">${c.closed?`ปิดเมื่อ ${esc(t.closed_at||"-")}`:left?`ยังมี ${left} คนที่ยอดไม่เป็นศูนย์`:"ยอดเคลียร์ครบแล้ว พร้อมปิด"}</div></div>
-      <button class="btn sm" data-act="${c.closed?"reopenTrip":"closeTrip"}">${c.closed?"เปิดอีกครั้ง":"ปิดทริป"}</button></div>
+function tripSettings(c){
+  const t = c.trip, left = c.closed ? 0 : Object.values(computeNet(c.tid,c.members).net).filter(v => Math.abs(v) > 0.01).length;
+  return `<div class="sf"><div class="sheet-h"><h3>ตั้งค่าทริป</h3><button class="icon-btn" data-act="closeSheet" aria-label="ปิด">${ic("x")}</button></div><div class="sheet-b">
+    <form data-form="editEv"><div class="fld"><span class="lbl">ชื่อทริป</span><input type="text" name="name" maxlength="${NAME_MAXLEN}" value="${esc(t.name)}"></div>
+      <div class="fld"><span class="lbl">วันที่</span><input type="date" name="date" value="${esc(t.trip_date||todayStr())}"></div><button class="btn pri full" type="submit">บันทึกชื่อและวันที่</button></form>
+    <div class="list" style="box-shadow:none;background:var(--surface2);margin:18px 0 6px">
+      <div class="it"><div class="g"><div class="t1">${c.closed?"🔒 ทริปปิดแล้ว":"ปิดทริป"}</div><div class="t2">${c.closed?`ปิดเมื่อ ${esc(t.closed_at||"-")}`:left?`ยังมี ${left} คนที่ยอดไม่เป็นศูนย์`:"ยอดเคลียร์ครบแล้ว พร้อมปิด"}</div></div>
+        <button class="btn sm" data-act="${c.closed?"reopenTrip":"closeTrip"}">${c.closed?"เปิดอีกครั้ง":"ปิดทริป"}</button></div>
       <div class="it"><div class="g"><div class="t1">ลบทริป</div><div class="t2">${t.created_by===c.me?"ย้ายไปถังขยะ กู้คืนได้ภายหลัง":t.created_by?`ลบได้เฉพาะ ${esc(t.created_by)} ผู้สร้างทริป`:"ทริปนี้ยังไม่มีเจ้าของ"}</div></div>
-      ${t.created_by===c.me?`<button class="btn sm danger" data-act="trashTrip">ลบ</button>`:t.created_by?"":`<button class="btn sm" data-act="claimTrip">รับเป็นเจ้าของ</button>`}</div></div>`;
-  }
-  if (!c.trip) UI.open.add("newtrip");
-  h += more("newtrip", "➕ สร้างทริปใหม่", `<form class="panel" data-form="createEv">
+        ${t.created_by===c.me?`<button class="btn sm danger" data-act="trashTrip">ลบ</button>`:t.created_by?"":`<button class="btn sm" data-act="claimTrip">รับเป็นเจ้าของ</button>`}</div></div>
+    <div class="hint">เพิ่มหรือนำเพื่อนออก ทำได้ที่แท็บ “เพื่อน” ในหน้าทริป</div></div></div>`;
+}
+function vNewTrip(c){
+  return `<form class="panel" data-form="createEv">
     <div class="fld"><span class="lbl">ชื่อทริป</span><input type="text" name="name" maxlength="${NAME_MAXLEN}" placeholder="เช่น ทริปเชียงใหม่"></div>
     <div class="fld"><span class="lbl">วันที่</span><input type="date" name="date" value="${todayStr()}"></div>
-    ${c.trips.length?`<div class="fld"><span class="lbl">คัดลอกจากทริปเดิม</span><select name="src"><option value="">ไม่คัดลอก เริ่มใหม่</option>${c.trips.map(t => opt(String(t.id),"",t.name)).join("")}</select>
+    ${c.trips.length?`<div class="fld"><span class="lbl">คัดลอกจากทริปเดิม</span><select name="src"><option value="">ไม่คัดลอก เริ่มใหม่</option>${c.trips.map(t => opt(String(t.id),"",tripDisp(t))).join("")}</select>
     <label class="chk"><input type="checkbox" name="cpm" checked> คัดลอกรายชื่อเพื่อน</label><label class="chk"><input type="checkbox" name="cpp" checked> คัดลอกรายการของที่ต้องหิ้ว</label></div>`:""}
-    <button class="btn pri full" type="submit">สร้างทริป</button></form>`);
-  return h;
+    <button class="btn pri full" type="submit">สร้างทริป</button></form>
+    <div class="hint">สร้างเสร็จแล้วจะพาไปหน้าทริป เพื่อเพิ่มเพื่อนเข้าทริปต่อได้เลย</div>`;
 }
 function vMembers(c){
   if (!c.trip) return emptyState("🗓️","ยังไม่ได้เลือกทริป","สร้างหรือเลือกทริปก่อน","ไปที่ทริป",`data-act="tab" data-k="manage" data-i="0"`);
@@ -3437,6 +3449,9 @@ function vSheet(c){
     const e = s.type === "edit" ? DB.expenses.find(x => x.id === s.id) : null;
     if ((s.type === "edit" && !e) || !c.trip){ UI.sheet = null; return ""; }
     inner = billForm(c, e);
+  } else if (s.type === "tripset"){
+    if (!c.trip){ UI.sheet = null; return ""; }
+    inner = tripSettings(c);
   } else if (s.type === "trips"){
     inner = `<div class="sf"><div class="sheet-h"><h3>ทริปของคุณ</h3><button class="icon-btn" data-act="closeSheet" aria-label="ปิด">${ic("x")}</button></div><div class="sheet-b">
       ${c.trips.length ? `<div class="list" style="box-shadow:none;background:var(--surface2)">${c.trips.map(t => { const n = DB.members.filter(m => m.trip_id===t.id).length;
@@ -3457,7 +3472,7 @@ function render(){
   else if (!c.me && S.menu !== "manage"){ html = vLogin(); UI.sheet = null; }
   else if (!c.me){ html = `<header class="top"><div class="wrap"><button class="icon-btn" data-act="menu" data-k="home" aria-label="กลับ">${ic("back")}</button><span style="font-family:var(--disp);font-weight:600;font-size:17px">กลับไปหน้าเข้าสู่ระบบ</span></div></header><main class="wrap">${vManage(c)}</main>`; }
   else {
-    const body = ({home:vHome, bills:vBills, chat:vChat, manage:vManage, account:vAccount}[S.menu] || vHome)(c);
+    const body = ({home:vHome, bills:vBills, pay:vPay, chat:vChat, manage:vManage, account:vAccount}[S.menu] || vHome)(c);
     html = vTop(ctx()) + `<main class="wrap">${syncBanner()}${body}</main>` + vNav(ctx()) + vSheet(c);
   }
   const a = document.activeElement, fid = a && a.id; let s0, s1; try { s0 = a.selectionStart; s1 = a.selectionEnd; } catch(e){}
@@ -3474,7 +3489,7 @@ function render(){
   }
   const cb = document.getElementById("chatBody"); if (cb) cb.scrollTop = cb.scrollHeight;
   if (typeof syncPresence === "function") syncPresence();
-  if (c.me && S.menu === "home" && (S.tabs.home2 ?? 0) <= 1) setTimeout(() => warmQrCards(ctx()), 60);
+  if (c.me && ((S.menu === "home" && (S.tabs.home2 ?? 0) === 0) || S.menu === "pay")) setTimeout(() => warmQrCards(ctx()), 60);
   if (c.me && S.menu === "home" && (S.tabs.home2 ?? 0) === 2) setTimeout(() => { const x = ctx(); if (x.trip && window.HTMLCanvasElement) makePackCard(x).catch(()=>{}); }, 60);
 }
 
@@ -3488,7 +3503,7 @@ const ACT = {
   newTrip: () => { UI.sheet = null; S.menu = "manage"; S.tabs.manage = 0; UI.open.add("newtrip"); window.scrollTo(0,0); },
   sheet: el => { UI.sheet = {type: el.dataset.s, id: el.dataset.id ? num(el.dataset.id) : null}; },
   addBill: () => { const c = ctx(); if (!c.trip || c.closed) return "skip";
-    if (!c.members.length){ flash("เพิ่มเพื่อนเข้าทริปก่อน แล้วค่อยบันทึกบิล","info"); S.menu = "manage"; S.tabs.manage = 1; return; }
+    if (!c.members.length){ flash("เพิ่มเพื่อนเข้าทริปก่อน แล้วค่อยบันทึกบิล","info"); S.menu = "home"; S.tabs.home2 = 1; return; }
     UI.sheet = {type:"add"}; },
   closeSheet: () => { UI.sheet = null; },
   chatOpen: el => { S.chat_partner = el.dataset.p || null; window.scrollTo(0,0); },
@@ -3511,7 +3526,7 @@ const ACT = {
     return [`บันทึกว่า ${dn} โอนให้ ${cn} แล้ว`];
   },
   nudge: el => { const c = ctx(), {dn, cn} = el.dataset, at = num(el.dataset.amt), u = userBy(cn)||{};
-    let m = `🔔 แจ้งเตือนยอดค้าง\n💳 ${dn} → ${cn}\n💰 ${fmt(at)} บาท`; if (u.promptpay) m += `\n📱 พร้อมเพย์: ${u.promptpay}`; if (u.bank_account) m += `\n🏦 ${u.bank_name||"บัญชี"}: ${u.bank_account}`; m += "\n(ดู QR พร้อมยอดได้ที่ ทริป → โอนเงิน)";
+    let m = `🔔 แจ้งเตือนยอดค้าง\n💳 ${dn} → ${cn}\n💰 ${fmt(at)} บาท`; if (u.promptpay) m += `\n📱 พร้อมเพย์: ${u.promptpay}`; if (u.bank_account) m += `\n🏦 ${u.bank_name||"บัญชี"}: ${u.bank_account}`; m += "\n(ดู QR พร้อมยอดได้ที่เมนู โอนเงิน)";
     notify(c.tid, dn, m, c.me, 0); return [`ส่งข้อความทวงถึง ${dn} แล้ว`]; },
   unpay: el => { if (!confirm("ยกเลิกรายการโอนนี้?")) return "skip"; DB.settlements = DB.settlements.filter(s => s.id !== num(el.dataset.id)); return ["ยกเลิกรายการโอนแล้ว"]; },
   packDel: el => { DB.packing = DB.packing.filter(p => p.id !== num(el.dataset.id)); return ["ลบรายการแล้ว","warn"]; },
@@ -3520,7 +3535,7 @@ const ACT = {
   dlOffline: () => { offlineSheet(ctx()); return "skip"; },
   closeTrip: () => { Object.assign(ctx().trip, {status:2, closed_at:nowStr()}); return ["ปิดทริปแล้ว ดูย้อนหลังได้อย่างเดียว"]; },
   reopenTrip: () => { Object.assign(ctx().trip, {status:0, closed_at:null}); return ["เปิดทริปอีกครั้งแล้ว"]; },
-  trashTrip: () => { if (!confirm("ย้ายทริปนี้ไปถังขยะ?")) return "skip"; ctx().trip.status = 1; S.trip_id = null; return ["ย้ายไปถังขยะแล้ว"]; },
+  trashTrip: () => { if (!confirm("ย้ายทริปนี้ไปถังขยะ?")) return "skip"; ctx().trip.status = 1; S.trip_id = null; UI.sheet = null; return ["ย้ายไปถังขยะแล้ว"]; },
   claimTrip: () => { const t = ctx().trip; if (!t.created_by) t.created_by = S.me; return ["คุณเป็นเจ้าของทริปนี้แล้ว"]; },
   restoreTrip: el => { DB.trips.find(t => t.id === num(el.dataset.id)).status = 0; return ["กู้คืนทริปแล้ว"]; },
   purgeTrip: el => { if (!confirm("ลบถาวร? กู้คืนไม่ได้อีก")) return "skip"; const id = num(el.dataset.id);
@@ -3616,13 +3631,13 @@ const FORM = {
       if (fd.get("cpp")) DB.packing.filter(p => p.trip_id === src).forEach(p => { DB.packing.push({id:nextId("packing"), trip_id:id, item:p.item, qty:p.qty, assignee:p.assignee, done:0, note:null, added_by:S.me, expense_id:null, timestamp:nowStr()}); np++; });
     }
     if (!src || !nm) DB.members.push({id:nextId("members"), trip_id:id, name:S.me});
-    S.trip_id = id; UI.open.delete("newtrip"); S.menu = src && nm ? "home" : "manage"; S.tabs.manage = 1; S.tabs.home2 = 0;
+    S.trip_id = id; S.menu = "home"; S.tabs.home2 = src && nm ? 0 : 1;
     return {ok:`สร้าง “${name}” แล้ว` + (src ? ` คัดลอกเพื่อน ${nm} คน ของ ${np} ชิ้น` : " ต่อไปเพิ่มเพื่อนเข้าทริป")};
   },
   editEv: (f, fd) => { const t = ctx().trip, name = fd.get("name").trim(), [ok, err] = validName(name); if (!ok) return {err};
     const date = fd.get("date") || t.trip_date || todayStr();
     if (DB.trips.some(x => x.status !== 1 && canSee(x) && x.name === name && x.trip_date === date && x.id !== t.id)) return {err:"มีทริปชื่อนี้ในวันนี้แล้ว"};
-    Object.assign(t, {name, trip_date:date}); return {ok:"บันทึกแล้ว"}; },
+    Object.assign(t, {name, trip_date:date}); return {ok:"บันทึกแล้ว", close:true}; },
   reply: (f, fd, sub) => { const c = ctx(), like = sub && sub.name === "like", msg = like ? "👍" : fd.get("msg").trim(); if (!msg) return null;
     notify(c.tid, S.chat_partner, msg, c.me, 0); setTimeout(() => { const b = document.getElementById("replyBox"); if (b && !like) b.focus(); }); return {ok:""}; },
   login: async (f, fd) => {
